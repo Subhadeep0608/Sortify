@@ -6,30 +6,13 @@
   <title>Upload Waste Image | Sortify</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes pulseGlow {
-      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-    }
-    .animate-fadeIn {
-      animation: fadeIn 0.6s ease-out;
-    }
-    .animate-pulseGlow {
-      animation: pulseGlow 1.5s infinite;
-    }
-    .gradient-bg {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    }
-    .hover-scale {
-      transition: transform 0.3s ease;
-    }
-    .hover-scale:hover {
-      transform: scale(1.05);
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+    .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+    .animate-pulseGlow { animation: pulseGlow 1.5s infinite; }
+    .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    .hover-scale { transition: transform 0.3s ease; }
+    .hover-scale:hover { transform: scale(1.05); }
   </style>
 </head>
 <body class="gradient-bg text-white flex flex-col items-center justify-center min-h-screen p-4 sm:p-8 font-sans">
@@ -47,11 +30,9 @@
       <span class="text-red-400 font-semibold">Non-Recyclable</span>.
     </p>
 
-    <!-- File Input -->
     <input type="file" id="fileInput" accept="image/*" capture="environment" 
       class="block w-full text-sm text-gray-300 border border-gray-600/50 rounded-xl cursor-pointer bg-gray-800/50 hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-green-500 mb-6 p-4 transition duration-300 hover-scale" />
 
-    <!-- Camera Stream -->
     <div class="mb-8">
       <video id="cameraStream" autoplay playsinline class="w-full rounded-xl shadow-lg hidden"></video>
       <canvas id="cameraCanvas" class="hidden"></canvas>
@@ -65,7 +46,6 @@
       </button>
     </div>
 
-    <!-- Upload Button -->
     <button id="uploadBtn" 
       class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition duration-300 w-full font-semibold hover-scale animate-pulseGlow">
       Upload & Predict
@@ -73,9 +53,14 @@
 
     <!-- Result Section -->
     <div id="result" class="mt-8 text-lg"></div>
+
+    <!-- Send to NGO Button -->
+    <button id="sendNgoBtn" 
+      class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl shadow-lg transition duration-300 w-full font-semibold hover-scale mt-4 hidden">
+      🤝 Send to NGO
+    </button>
   </div>
 
-  <!-- Back Button -->
   <a href="/" class="mt-10 text-blue-400 hover:text-blue-300 transition duration-300 animate-fadeIn">← Back to Home</a>
 
   <script>
@@ -86,31 +71,45 @@
     const captureBtn = document.getElementById("captureBtn");
     const cameraStream = document.getElementById("cameraStream");
     const cameraCanvas = document.getElementById("cameraCanvas");
+    const sendNgoBtn = document.getElementById("sendNgoBtn");
+
+    let lastPrediction = null;
+    let lastFilePath = null;
 
     function uploadFile(file) {
       const formData = new FormData();
       formData.append("file", file);
 
       resultDiv.innerHTML = `<p class="text-yellow-400 animate-pulse">⏳ Processing...</p>`;
+      sendNgoBtn.classList.add("hidden");
 
-      fetch("/predict", {
-        method: "POST",
-        body: formData
-      })
+      fetch("/predict", { method: "POST", body: formData })
       .then(res => res.json())
       .then(data => {
-        if (data.error) {
+        if(data.error){
           resultDiv.innerHTML = `<p class="text-red-400">❌ ${data.error}</p>`;
         } else {
-          const guidance = data.prediction.toLowerCase() === 'Recyclable' 
-            ? `<p class="text-green-400">✅ Place in the <strong>recycling bin</strong>. Ensure it's clean and free of contaminants!</p>`
-            : `<p class="text-red-400">🗑️ Dispose in the <strong>general waste bin</strong>. This item cannot be recycled.</p>`;
-          
+          lastPrediction = data.prediction;
+          lastFilePath = data.file_path;
+
+          const guidance = data.prediction.toLowerCase() === 'recyclable' 
+            ? `<p class="text-green-400">✅ Place in the <strong>recycling bin</strong>.</p>` 
+            : `<p class="text-red-400">🗑️ Dispose in the <strong>general waste bin</strong>.</p>`;
+
           resultDiv.innerHTML = `
-            <p class="text-xl font-bold mb-4 ${data.prediction.toLowerCase() === 'Recyclable' ? 'text-green-400' : 'text-red-400'}">${data.prediction}</p>
+            <p class="text-xl font-bold mb-4 ${data.prediction.toLowerCase()==='recyclable'?'text-green-400':'text-red-400'}">${data.prediction}</p>
             ${guidance}
             <img src="${data.file_path}" alt="Uploaded Image" class="rounded-xl shadow-lg w-72 mx-auto mt-4 hover-scale"/>
           `;
+
+          sendNgoBtn.classList.remove("hidden");
+
+          // Token reward popup
+          if(data.tokens_earned && data.tokens_earned>0){
+            setTimeout(()=> {
+              alert(`🎉 You earned ${data.tokens_earned} tokens! Transaction: ${data.reward_tx}`);
+            }, 200);
+          }
         }
       })
       .catch(err => {
@@ -119,39 +118,52 @@
       });
     }
 
-    // Upload button
     uploadBtn.addEventListener("click", () => {
-      if (fileInput.files.length) {
+      if(fileInput.files.length){
         uploadFile(fileInput.files[0]);
       } else {
         resultDiv.innerHTML = `<p class="text-red-400">⚠️ Please select or capture an image first!</p>`;
       }
     });
 
-    // Start camera
     startCameraBtn.addEventListener("click", async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({ video:true });
         cameraStream.srcObject = stream;
         cameraStream.classList.remove("hidden");
         captureBtn.classList.remove("hidden");
         startCameraBtn.classList.add("hidden");
-      } catch (err) {
+      }catch(err){
         resultDiv.innerHTML = `<p class="text-red-400">⚠️ Camera access denied or not available.</p>`;
       }
     });
 
-    // Capture photo from live stream
     captureBtn.addEventListener("click", () => {
       const ctx = cameraCanvas.getContext("2d");
       cameraCanvas.width = cameraStream.videoWidth;
       cameraCanvas.height = cameraStream.videoHeight;
-      ctx.drawImage(cameraStream, 0, 0);
-
-      cameraCanvas.toBlob((blob) => {
-        const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+      ctx.drawImage(cameraStream,0,0);
+      cameraCanvas.toBlob((blob)=>{
+        const file = new File([blob], "capture.jpg", { type:"image/jpeg" });
         uploadFile(file);
-      }, "image/jpeg");
+      },"image/jpeg");
+    });
+
+    sendNgoBtn.addEventListener("click", ()=>{
+      fetch("/send_to_ngo",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ prediction:lastPrediction, file_path:lastFilePath })
+      }).then(res=>res.json()).then(data=>{
+        if(data.success){
+          resultDiv.innerHTML += `<p class="mt-4 text-purple-400">🤝 Sent to NGO successfully!</p>`;
+        } else {
+          resultDiv.innerHTML += `<p class="mt-4 text-red-400">⚠️ Failed to send to NGO.</p>`;
+        }
+      }).catch(err=>{
+        console.error(err);
+        resultDiv.innerHTML += `<p class="mt-4 text-red-400">⚠️ Something went wrong while sending to NGO.</p>`;
+      });
     });
   </script>
 </body>

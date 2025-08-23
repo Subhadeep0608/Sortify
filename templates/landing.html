@@ -7,119 +7,64 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.12.0/cdn.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
   <style>
-    /* Gradient Background Animation */
-    body {
-      background: linear-gradient(-45deg, #16a34a, #2563eb, #4f46e5, #f59e0b);
-      background-size: 400% 400%;
-      animation: gradientBG 12s ease infinite;
-    }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    /* Modal transitions */
-    [x-cloak] { display: none; }
+    body { background: linear-gradient(-45deg, #16a34a, #2563eb, #4f46e5, #f59e0b); background-size: 400% 400%; animation: gradientBG 12s ease infinite; }
+    @keyframes gradientBG { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+    [x-cloak]{ display:none; }
   </style>
 </head>
 <body class="min-h-screen text-white flex flex-col font-sans">
 
-  <!-- Navbar -->
-  <header class="w-full bg-white bg-opacity-10 backdrop-blur-lg shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-      <h1 class="text-3xl font-extrabold text-yellow-300 drop-shadow-lg">♻️ Sortify</h1>
-      <nav class="space-x-6 hidden md:block text-lg font-medium">
-        <a href="#" class="hover:text-yellow-300 transition">Home</a>
-        <a href="#features" class="hover:text-yellow-300 transition">Features</a>
-        <a href="#about" class="hover:text-yellow-300 transition">About</a>
-      </nav>
-      <div class="space-x-3">
-        <button @click="loginOpen = true" class="px-5 py-2 bg-yellow-300 text-gray-900 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-yellow-400 transition transform">Login</button>
-        <button @click="signupOpen = true" class="px-5 py-2 bg-indigo-800 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-indigo-900 transition transform">Sign Up</button>
+<header class="w-full bg-white bg-opacity-10 backdrop-blur-lg shadow-md sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <h1 class="text-3xl font-extrabold text-yellow-300 drop-shadow-lg">♻️ Sortify</h1>
+    <nav class="space-x-6 hidden md:block text-lg font-medium">
+      <a href="#" class="hover:text-yellow-300 transition">Home</a>
+      <a href="#features" class="hover:text-yellow-300 transition">Features</a>
+      <a href="#about" class="hover:text-yellow-300 transition">About</a>
+    </nav>
+    <div class="space-x-3">
+      <button @click="loginOpen = true" class="px-5 py-2 bg-yellow-300 text-gray-900 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-yellow-400 transition transform">Login</button>
+      <button @click="signupOpen = true" class="px-5 py-2 bg-indigo-800 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-indigo-900 transition transform">Sign Up</button>
+    </div>
+  </div>
+</header>
+
+<main class="flex-grow flex items-center justify-center text-center px-6 md:px-12" x-data="{loginOpen:false, signupOpen:false}" x-cloak>
+  <div>
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-6 drop-shadow-lg animate-pulse">Welcome to <span class="text-yellow-300">Sortify</span></h1>
+    <p id="typed-text" class="text-lg md:text-2xl mb-10 max-w-3xl mx-auto leading-relaxed font-medium"></p>
+
+    <a href="{{ url_for('upload_page') }}" class="px-10 py-4 bg-yellow-300 text-gray-900 rounded-full font-bold text-xl shadow-lg transform transition hover:scale-110 hover:bg-yellow-400">
+      🚀 Start Sorting
+    </a>
+
+    <!-- Wallet Check -->
+    <div class="mt-10 max-w-md mx-auto">
+      <input type="text" id="walletCheck" placeholder="Enter wallet address" class="w-full p-3 rounded-xl text-gray-900"/>
+      <button onclick="checkWallet()" class="mt-3 w-full py-3 bg-green-500 hover:bg-green-600 rounded-xl font-semibold transition hover-scale">Check Wallet Balance</button>
+      <p id="balance" class="mt-3 text-lg"></p>
+    </div>
+
+    <!-- Features Section -->
+    <section id="features" class="mt-20 grid gap-8 sm:grid-cols-2 md:grid-cols-3">
+      <div class="bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:scale-105 hover:shadow-yellow-300/50 transition transform">
+        <h3 class="text-2xl font-semibold mb-3">🤖 Smart Detection</h3>
+        <p class="text-sm text-gray-200">AI instantly identifies recyclable & non-recyclable waste.</p>
       </div>
-    </div>
-  </header>
-
-  <!-- Main Hero -->
-  <main class="flex-grow flex items-center justify-center text-center px-6 md:px-12" 
-        x-data="{loginOpen:false, signupOpen:false}" x-cloak>
-    <div>
-      <h1 class="text-5xl md:text-6xl font-extrabold mb-6 drop-shadow-lg animate-pulse">
-        Welcome to <span class="text-yellow-300">Sortify</span>
-      </h1>
-      <p id="typed-text" class="text-lg md:text-2xl mb-10 max-w-3xl mx-auto leading-relaxed font-medium"></p>
-
-      <!-- CTA -->
-      <a href="{{ url_for('upload_page') }}" 
-         class="px-10 py-4 bg-yellow-300 text-gray-900 rounded-full font-bold text-xl shadow-lg transform transition hover:scale-110 hover:bg-yellow-400">
-        🚀 Start Sorting
-      </a>
-
-      <!-- Features -->
-      <section id="features" class="mt-20 grid gap-8 sm:grid-cols-2 md:grid-cols-3">
-        <div class="bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:scale-105 hover:shadow-yellow-300/50 transition transform">
-          <h3 class="text-2xl font-semibold mb-3">🤖 Smart Detection</h3>
-          <p class="text-sm text-gray-200">AI instantly identifies recyclable & non-recyclable waste.</p>
-        </div>
-        <div class="bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:scale-105 hover:shadow-green-300/50 transition transform">
-          <h3 class="text-2xl font-semibold mb-3">🌱 Eco Friendly</h3>
-          <p class="text-sm text-gray-200">Promoting sustainability through smart innovation.</p>
-        </div>
-        <div class="bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:scale-105 hover:shadow-indigo-300/50 transition transform">
-          <h3 class="text-2xl font-semibold mb-3">🎨 User Friendly</h3>
-          <p class="text-sm text-gray-200">A modern, simple UI designed for everyone.</p>
-        </div>
-      </section>
-    </div>
-
-    <!-- Login Modal -->
-    <div x-show="loginOpen" 
-         x-transition.opacity.scale.80 
-         class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-      <div class="bg-white text-gray-900 rounded-2xl p-8 w-96 shadow-xl">
-        <h2 class="text-2xl font-bold mb-4">Login</h2>
-        <form class="space-y-4">
-          <input type="email" placeholder="Email" class="w-full rounded-lg border-gray-300 focus:ring-yellow-400" required>
-          <input type="password" placeholder="Password" class="w-full rounded-lg border-gray-300 focus:ring-yellow-400" required>
-          <button class="w-full py-2 bg-yellow-400 rounded-lg font-bold text-gray-900 hover:bg-yellow-500 transition">Login</button>
-        </form>
-        <button @click="loginOpen = false" class="mt-4 text-sm text-blue-500 hover:underline">Close</button>
+      <div class="bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:scale-105 hover:shadow-green-300/50 transition transform">
+        <h3 class="text-2xl font-semibold mb-3">🌱 Eco Friendly</h3>
+        <p class="text-sm text-gray-200">Promoting sustainability through smart innovation.</p>
       </div>
-    </div>
-
-    <!-- Signup Modal -->
-    <div x-show="signupOpen" 
-         x-transition.opacity.scale.80 
-         class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-      <div class="bg-white text-gray-900 rounded-2xl p-8 w-96 shadow-xl">
-        <h2 class="text-2xl font-bold mb-4">Sign Up</h2>
-        <form class="space-y-4">
-          <input type="text" placeholder="Full Name" class="w-full rounded-lg border-gray-300 focus:ring-indigo-500" required>
-          <input type="email" placeholder="Email" class="w-full rounded-lg border-gray-300 focus:ring-indigo-500" required>
-          <input type="password" placeholder="Password" class="w-full rounded-lg border-gray-300 focus:ring-indigo-500" required>
-          <button class="w-full py-2 bg-indigo-800 rounded-lg font-bold text-white hover:bg-indigo-900 transition">Create Account</button>
-        </form>
-        <button @click="signupOpen = false" class="mt-4 text-sm text-blue-500 hover:underline">Close</button>
+      <div class="bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg hover:scale-105 hover:shadow-indigo-300/50 transition transform">
+        <h3 class="text-2xl font-semibold mb-3">🎨 User Friendly</h3>
+        <p class="text-sm text-gray-200">A modern, simple UI designed for everyone.</p>
       </div>
-    </div>
-  </main>
+    </section>
+  </div>
 
-  <!-- Footer -->
-  <footer class="bg-white bg-opacity-10 backdrop-blur-lg py-6 mt-12">
-    <div class="max-w-6xl mx-auto text-center text-sm text-gray-200">
-      © 2025 <span class="text-yellow-300 font-bold">Sortify</span> | Made with 💚 for a cleaner planet 🌍  
-      <div class="mt-2 flex justify-center space-x-6 text-base">
-        <a href="#" class="hover:text-yellow-300">Twitter</a>
-        <a href="#" class="hover:text-yellow-300">LinkedIn</a>
-        <a href="#" class="hover:text-yellow-300">GitHub</a>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Typed.js Script -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      var typed = new Typed("#typed-text", {
+      new Typed("#typed-text", {
         strings: [
           "♻️ AI-powered waste classification to make recycling smarter, easier, and greener. Let’s build a cleaner future together.",
           "♻️ এআই-চালিত বর্জ্য শ্রেণীবিভাজন যা পুনর্ব্যবহারকে করবে আরও সহজ এবং সবুজ। আসুন একসাথে গড়ি একটি পরিচ্ছন্ন ভবিষ্যৎ।",
@@ -132,7 +77,19 @@
         smartBackspace: true,
       });
     });
-  </script>
 
+    async function checkWallet(){
+      const wallet = document.getElementById('walletCheck').value;
+      if(!wallet){ alert("Enter wallet address"); return; }
+      const res = await fetch('/wallet/' + wallet);
+      const data = await res.json();
+      if(data.balance !== undefined){
+        document.getElementById('balance').innerText = `Balance: ${data.balance}`;
+      } else {
+        document.getElementById('balance').innerText = `Error: ${data.balance}`;
+      }
+    }
+  </script>
+</main>
 </body>
 </html>
