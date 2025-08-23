@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sortify - Upload</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Animate background gradient */
+    body {
+      background: linear-gradient(-45deg, #4f46e5, #2563eb, #16a34a, #eab308);
+      background-size: 400% 400%;
+      animation: gradientBG 12s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+    /* Smooth fade-in */
+    .fade-in {
+      animation: fadeIn 1.2s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="flex justify-between items-center p-6 bg-black bg-opacity-20 backdrop-blur-md shadow-lg">
+    <h1 class="text-3xl font-extrabold tracking-wide text-yellow-300">⚡ Sortify</h1>
+    <a href="/" class="text-white bg-yellow-400 px-4 py-2 rounded-xl font-semibold hover:bg-yellow-500 shadow-lg transition">
+      ← Home
+    </a>
+  </header>
+
+  <!-- Upload Container -->
+  <main class="flex-grow flex items-center justify-center px-4">
+    <div class="bg-white/10 backdrop-blur-xl shadow-2xl rounded-3xl p-10 w-full max-w-2xl text-center border border-white/20 fade-in">
+
+      <h2 class="text-4xl font-extrabold mb-4 text-yellow-300 drop-shadow-lg">Upload or Capture Waste</h2>
+      <p class="text-gray-200 mb-8 text-lg">Upload an image or capture with your camera.  
+      Our AI will instantly classify it as <span class="font-bold text-green-400">♻️ recyclable</span> or <span class="font-bold text-red-400">🚯 non-recyclable</span>.</p>
+
+      <!-- Upload Box -->
+      <div class="border-2 border-dashed border-yellow-300 rounded-xl p-8 mb-8 cursor-pointer hover:scale-105 transform transition bg-black/20">
+        <input type="file" id="fileInput" accept="image/*" hidden>
+        <label for="fileInput" class="text-yellow-300 font-semibold cursor-pointer text-lg">
+          📂 Click to Upload
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col space-y-4">
+        <button onclick="uploadImage()" 
+                class="w-full py-3 bg-yellow-400 text-gray-900 font-bold rounded-xl shadow-xl hover:bg-yellow-500 hover:scale-105 transition transform">
+          🔍 Analyze Upload
+        </button>
+
+        <video id="camera" autoplay playsinline class="rounded-xl shadow-md w-full hidden mt-4 border-2 border-white/30"></video>
+        <button onclick="enableCamera()" 
+                class="w-full py-3 bg-green-400 text-gray-900 font-bold rounded-xl shadow-xl hover:bg-green-500 hover:scale-105 transition transform">
+          📸 Enable Camera
+        </button>
+        <button onclick="captureImage()" 
+                class="w-full py-3 bg-blue-400 text-gray-900 font-bold rounded-xl shadow-xl hover:bg-blue-500 hover:scale-105 transition transform">
+          📷 Capture & Analyze
+        </button>
+      </div>
+
+      <!-- Hidden canvas -->
+      <canvas id="canvas" class="hidden"></canvas>
+
+      <!-- Preview -->
+      <div class="mt-8">
+        <img id="preview" class="w-full rounded-2xl shadow-xl hidden"/>
+        <div id="result" class="text-2xl font-bold mt-6 hidden p-4 rounded-xl bg-black/40 border border-white/20"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-6 text-gray-200 text-sm bg-black/20 backdrop-blur-md">
+    © 2025 <span class="font-semibold text-yellow-300">Sortify</span> | Built with ❤️ using AI
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>
+    function enableCamera() {
+      const video = document.getElementById('camera');
+      video.classList.remove('hidden');
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => alert("Camera access denied: " + err));
+    }
+
+    // Animate result reveal
+    function showResult(prediction) {
+      const result = document.getElementById("result");
+      result.classList.remove("hidden");
+      result.innerHTML = prediction;
+      result.style.animation = "fadeIn 1s ease forwards";
+    }
+  </script>
+</body>
+</html>

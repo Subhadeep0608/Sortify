@@ -1,0 +1,105 @@
+/* General */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #fff;
+}
+
+/* Landing Page */
+.landing {
+  background: linear-gradient(135deg, #43cea2, #185a9d);
+  display: flex;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+.hero .highlight {
+  color: #ffeb3b;
+}
+.hero p {
+  font-size: 1.3rem;
+  margin-bottom: 30px;
+}
+.cta-button {
+  background: #ffeb3b;
+  padding: 15px 30px;
+  font-weight: bold;
+  color: #333;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: 0.3s;
+}
+.cta-button:hover {
+  background: #ffc107;
+}
+
+/* Upload Page */
+.upload {
+  background: linear-gradient(135deg, #0f2027, #2c5364);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.back-link {
+  color: #ffeb3b;
+  text-decoration: none;
+}
+
+.upload-box {
+  margin: 50px auto;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 15px;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+}
+
+.upload-btn, .analyze-btn, .capture-btn {
+  display: inline-block;
+  margin: 10px;
+  padding: 12px 20px;
+  border-radius: 30px;
+  background: #43cea2;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: 0.3s;
+}
+
+.upload-btn:hover, .analyze-btn:hover, .capture-btn:hover {
+  background: #2c5364;
+}
+
+#camera {
+  margin-top: 15px;
+  border-radius: 10px;
+  width: 100%;
+}
+
+#preview {
+  margin-top: 15px;
+  width: 100%;
+  border-radius: 10px;
+  border: 2px solid #ffeb3b;
+}
+
+#result {
+  margin-top: 20px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #ffeb3b;
+}
