@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
@@ -6,13 +6,16 @@ import numpy as np
 import os
 from werkzeug.utils import secure_filename
 
+# Flask app
 app = Flask(__name__)
-MODEL_PATH = "model/Sortify.h5"
+app.config["UPLOAD_FOLDER"] = "static"  # Uploaded files go inside /static
 
 # Load model
+MODEL_PATH = "model/Sortify.h5"
 model = load_model(MODEL_PATH)
 print("✅ Model loaded successfully")
 
+# Image preprocessing
 def preprocess(img_path):
     """Preprocess image for model prediction"""
     img = image.load_img(img_path, target_size=(224, 224))
@@ -20,6 +23,7 @@ def preprocess(img_path):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
+# Routes
 @app.route('/')
 def landing():
     return render_template('landing.html')
@@ -39,22 +43,25 @@ def predict():
     
     # Save uploaded file
     filename = secure_filename(file.filename)
-    filepath = os.path.join("static", filename)
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
-    # Preprocess and predict
+    # Preprocess + Predict
     img_array = preprocess(filepath)
     preds = model.predict(img_array)[0]
 
-    # Handle both sigmoid (1 output) and softmax (2 outputs) cases
+    # Handle both sigmoid (binary) & softmax (multi-class)
     if preds.shape[0] == 1:  
-        # Sigmoid case → single probability
         label = "♻️ Recyclable" if preds[0] > 0.5 else "🚯 Non-Recyclable"
-    else:  
-        # Softmax case → two probabilities
+    else:
         label = "♻️ Recyclable" if np.argmax(preds) == 1 else "🚯 Non-Recyclable"
 
-    return jsonify({'prediction': label, 'file_path': filepath})
+    # Return response
+    return jsonify({
+        'prediction': label,
+        'file_url': url_for('static', filename=filename)
+    })
 
+# Run app
 if __name__ == "__main__":
     app.run(debug=True)

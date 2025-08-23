@@ -2,107 +2,157 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sortify - Upload</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Waste Image | Sortify</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Animate background gradient */
-    body {
-      background: linear-gradient(-45deg, #4f46e5, #2563eb, #16a34a, #eab308);
-      background-size: 400% 400%;
-      animation: gradientBG 12s ease infinite;
-    }
-    @keyframes gradientBG {
-      0% {background-position: 0% 50%;}
-      50% {background-position: 100% 50%;}
-      100% {background-position: 0% 50%;}
-    }
-    /* Smooth fade-in */
-    .fade-in {
-      animation: fadeIn 1.2s ease forwards;
-      opacity: 0;
-    }
     @keyframes fadeIn {
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.6s ease-out;
+    }
+    .animate-pulseGlow {
+      animation: pulseGlow 1.5s infinite;
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    .hover-scale {
+      transition: transform 0.3s ease;
+    }
+    .hover-scale:hover {
+      transform: scale(1.05);
     }
   </style>
 </head>
-<body class="min-h-screen text-white flex flex-col font-sans">
+<body class="gradient-bg text-white flex flex-col items-center justify-center min-h-screen p-4 sm:p-8 font-sans">
 
   <!-- Header -->
-  <header class="flex justify-between items-center p-6 bg-black bg-opacity-20 backdrop-blur-md shadow-lg">
-    <h1 class="text-3xl font-extrabold tracking-wide text-yellow-300">⚡ Sortify</h1>
-    <a href="/" class="text-white bg-yellow-400 px-4 py-2 rounded-xl font-semibold hover:bg-yellow-500 shadow-lg transition">
-      ← Home
-    </a>
-  </header>
+  <h1 class="text-4xl sm:text-5xl font-extrabold mb-10 text-green-400 flex items-center gap-4 animate-fadeIn">
+    ♻️ Sortify - Smart Waste Classification
+  </h1>
 
-  <!-- Upload Container -->
-  <main class="flex-grow flex items-center justify-center px-4">
-    <div class="bg-white/10 backdrop-blur-xl shadow-2xl rounded-3xl p-10 w-full max-w-2xl text-center border border-white/20 fade-in">
+  <!-- Upload Card -->
+  <div class="bg-gray-900/95 backdrop-blur-lg shadow-xl rounded-3xl p-6 sm:p-10 w-full max-w-md text-center border border-gray-700/30 animate-fadeIn">
+    <p class="mb-6 text-gray-200 text-lg leading-relaxed">
+      Upload or capture an image to classify waste as 
+      <span class="text-green-400 font-semibold">Recyclable</span> or 
+      <span class="text-red-400 font-semibold">Non-Recyclable</span>.
+    </p>
 
-      <h2 class="text-4xl font-extrabold mb-4 text-yellow-300 drop-shadow-lg">Upload or Capture Waste</h2>
-      <p class="text-gray-200 mb-8 text-lg">Upload an image or capture with your camera.  
-      Our AI will instantly classify it as <span class="font-bold text-green-400">♻️ recyclable</span> or <span class="font-bold text-red-400">🚯 non-recyclable</span>.</p>
+    <!-- File Input -->
+    <input type="file" id="fileInput" accept="image/*" capture="environment" 
+      class="block w-full text-sm text-gray-300 border border-gray-600/50 rounded-xl cursor-pointer bg-gray-800/50 hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-green-500 mb-6 p-4 transition duration-300 hover-scale" />
 
-      <!-- Upload Box -->
-      <div class="border-2 border-dashed border-yellow-300 rounded-xl p-8 mb-8 cursor-pointer hover:scale-105 transform transition bg-black/20">
-        <input type="file" id="fileInput" accept="image/*" hidden>
-        <label for="fileInput" class="text-yellow-300 font-semibold cursor-pointer text-lg">
-          📂 Click to Upload
-        </label>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex flex-col space-y-4">
-        <button onclick="uploadImage()" 
-                class="w-full py-3 bg-yellow-400 text-gray-900 font-bold rounded-xl shadow-xl hover:bg-yellow-500 hover:scale-105 transition transform">
-          🔍 Analyze Upload
-        </button>
-
-        <video id="camera" autoplay playsinline class="rounded-xl shadow-md w-full hidden mt-4 border-2 border-white/30"></video>
-        <button onclick="enableCamera()" 
-                class="w-full py-3 bg-green-400 text-gray-900 font-bold rounded-xl shadow-xl hover:bg-green-500 hover:scale-105 transition transform">
-          📸 Enable Camera
-        </button>
-        <button onclick="captureImage()" 
-                class="w-full py-3 bg-blue-400 text-gray-900 font-bold rounded-xl shadow-xl hover:bg-blue-500 hover:scale-105 transition transform">
-          📷 Capture & Analyze
-        </button>
-      </div>
-
-      <!-- Hidden canvas -->
-      <canvas id="canvas" class="hidden"></canvas>
-
-      <!-- Preview -->
-      <div class="mt-8">
-        <img id="preview" class="w-full rounded-2xl shadow-xl hidden"/>
-        <div id="result" class="text-2xl font-bold mt-6 hidden p-4 rounded-xl bg-black/40 border border-white/20"></div>
-      </div>
+    <!-- Camera Stream -->
+    <div class="mb-8">
+      <video id="cameraStream" autoplay playsinline class="w-full rounded-xl shadow-lg hidden"></video>
+      <canvas id="cameraCanvas" class="hidden"></canvas>
+      <button id="startCameraBtn" 
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg transition duration-300 mt-4 flex items-center gap-2 mx-auto hover-scale">
+        📷 Open Camera
+      </button>
+      <button id="captureBtn" 
+        class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl shadow-lg transition duration-300 mt-4 flex items-center gap-2 mx-auto hidden animate-pulseGlow">
+        📸 Capture & Predict
+      </button>
     </div>
-  </main>
 
-  <!-- Footer -->
-  <footer class="text-center py-6 text-gray-200 text-sm bg-black/20 backdrop-blur-md">
-    © 2025 <span class="font-semibold text-yellow-300">Sortify</span> | Built with ❤️ using AI
-  </footer>
+    <!-- Upload Button -->
+    <button id="uploadBtn" 
+      class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition duration-300 w-full font-semibold hover-scale animate-pulseGlow">
+      Upload & Predict
+    </button>
 
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Result Section -->
+    <div id="result" class="mt-8 text-lg"></div>
+  </div>
+
+  <!-- Back Button -->
+  <a href="/" class="mt-10 text-blue-400 hover:text-blue-300 transition duration-300 animate-fadeIn">← Back to Home</a>
+
   <script>
-    function enableCamera() {
-      const video = document.getElementById('camera');
-      video.classList.remove('hidden');
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => { video.srcObject = stream; })
-        .catch(err => alert("Camera access denied: " + err));
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const resultDiv = document.getElementById("result");
+    const startCameraBtn = document.getElementById("startCameraBtn");
+    const captureBtn = document.getElementById("captureBtn");
+    const cameraStream = document.getElementById("cameraStream");
+    const cameraCanvas = document.getElementById("cameraCanvas");
+
+    function uploadFile(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      resultDiv.innerHTML = `<p class="text-yellow-400 animate-pulse">⏳ Processing...</p>`;
+
+      fetch("/predict", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          resultDiv.innerHTML = `<p class="text-red-400">❌ ${data.error}</p>`;
+        } else {
+          const guidance = data.prediction.toLowerCase() === 'Recyclable' 
+            ? `<p class="text-green-400">✅ Place in the <strong>recycling bin</strong>. Ensure it's clean and free of contaminants!</p>`
+            : `<p class="text-red-400">🗑️ Dispose in the <strong>general waste bin</strong>. This item cannot be recycled.</p>`;
+          
+          resultDiv.innerHTML = `
+            <p class="text-xl font-bold mb-4 ${data.prediction.toLowerCase() === 'Recyclable' ? 'text-green-400' : 'text-red-400'}">${data.prediction}</p>
+            ${guidance}
+            <img src="${data.file_path}" alt="Uploaded Image" class="rounded-xl shadow-lg w-72 mx-auto mt-4 hover-scale"/>
+          `;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        resultDiv.innerHTML = `<p class="text-red-400">⚠️ Something went wrong. Try again.</p>`;
+      });
     }
 
-    // Animate result reveal
-    function showResult(prediction) {
-      const result = document.getElementById("result");
-      result.classList.remove("hidden");
-      result.innerHTML = prediction;
-      result.style.animation = "fadeIn 1s ease forwards";
-    }
+    // Upload button
+    uploadBtn.addEventListener("click", () => {
+      if (fileInput.files.length) {
+        uploadFile(fileInput.files[0]);
+      } else {
+        resultDiv.innerHTML = `<p class="text-red-400">⚠️ Please select or capture an image first!</p>`;
+      }
+    });
+
+    // Start camera
+    startCameraBtn.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        cameraStream.srcObject = stream;
+        cameraStream.classList.remove("hidden");
+        captureBtn.classList.remove("hidden");
+        startCameraBtn.classList.add("hidden");
+      } catch (err) {
+        resultDiv.innerHTML = `<p class="text-red-400">⚠️ Camera access denied or not available.</p>`;
+      }
+    });
+
+    // Capture photo from live stream
+    captureBtn.addEventListener("click", () => {
+      const ctx = cameraCanvas.getContext("2d");
+      cameraCanvas.width = cameraStream.videoWidth;
+      cameraCanvas.height = cameraStream.videoHeight;
+      ctx.drawImage(cameraStream, 0, 0);
+
+      cameraCanvas.toBlob((blob) => {
+        const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+        uploadFile(file);
+      }, "image/jpeg");
+    });
   </script>
 </body>
 </html>
