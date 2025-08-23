@@ -7,9 +7,9 @@ import numpy as np
 import os
 import uuid
 
-# -----------------------------
+
 # Flask setup
-# -----------------------------
+
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", "static/uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -18,9 +18,9 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# -----------------------------
+
 # Load ML Model
-# -----------------------------
+
 MODEL_PATH = os.environ.get("MODEL_PATH", "model/Sortify.h5")
 model_loaded = False
 model_error = None
@@ -52,9 +52,9 @@ def interpret_prediction(preds: np.ndarray) -> bool:
         return int(np.argmax(preds[0])) == 1
     return False
 
-# -----------------------------
+
 # Simulated Blockchain Reward
-# -----------------------------
+
 def send_reward_to_user(user_address: str, points: int = 10):
     """
     Simulate sending reward. Returns a dummy tx hash.
@@ -63,18 +63,18 @@ def send_reward_to_user(user_address: str, points: int = 10):
         return "Error: Invalid wallet"
     return f"SIMULATED_TX_HASH_{uuid.uuid4().hex[:8]}"
 
-# -----------------------------
+
 # Dummy NGOs
-# -----------------------------
+
 NGOS = [
     {"id": 1, "name": "Green Earth Foundation", "contact": "green@ngo.org"},
     {"id": 2, "name": "Recycle India", "contact": "recycle@ngo.org"},
     {"id": 3, "name": "EcoSavers", "contact": "eco@ngo.org"},
 ]
 
-# -----------------------------
+
 # Routes
-# -----------------------------
+
 @app.route("/")
 def landing():
     return render_template("landing.html")
@@ -135,15 +135,15 @@ def predict():
 def serve_uploads(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-# -----------------------------
+
 # Demo Wallet Balance Route
-# -----------------------------
+
 @app.route("/wallet/<wallet>")
 def wallet_balance(wallet):
     return jsonify({"balance": 123})  # Simulated balance
 
-# -----------------------------
+
 # Run App
-# -----------------------------
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
