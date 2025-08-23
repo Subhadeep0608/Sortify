@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 # Flask app
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = "static"  # Uploaded files go inside /static
+app.config["UPLOAD_FOLDER"] = "images"  # Uploaded files go inside /static
 
 # Load model
 MODEL_PATH = "model/Sortify.h5"
