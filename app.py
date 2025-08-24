@@ -63,6 +63,22 @@ def init_db():
                   accepts_recyclables BOOLEAN DEFAULT TRUE,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
+    # Create recycling_centers table (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS recycling_centers
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  name TEXT NOT NULL,
+                  type TEXT NOT NULL,
+                  category TEXT,
+                  address TEXT,
+                  latitude REAL,
+                  longitude REAL,
+                  contact_email TEXT,
+                  contact_phone TEXT,
+                  website TEXT,
+                  operating_hours TEXT,
+                  accepted_materials TEXT,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    
     # Check if wallet_address column exists, if not add it
     try:
         c.execute("SELECT wallet_address FROM users LIMIT 1")
@@ -102,6 +118,37 @@ def init_db():
         c.executemany('''INSERT INTO recyclers (name, description, category, email, phone, website, 
                       address, latitude, longitude, city, accepts_recyclables) 
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', sample_recyclers)
+    
+    # Insert sample recycling centers if table is empty (NEW)
+    c.execute("SELECT COUNT(*) FROM recycling_centers")
+    if c.fetchone()[0] == 0:
+        sample_centers = [
+            ('Green Earth Recycling', 'NGO', 'Multiple', 
+             '123 Eco Street, Green City', 12.9716, 77.5946,
+             'contact@greenearth.org', '+1234567890', 'https://greenearth.org',
+             'Mon-Fri: 9AM-5PM', 'Plastic, Paper, Glass, Metal'),
+            ('City Recycling Facility', 'Government', 'Multiple',
+             '456 Municipal Road, Metro City', 28.6139, 77.2090,
+             'info@cityrecycle.gov', '+1987654321', 'https://cityrecycle.gov',
+             'Mon-Sat: 8AM-6PM', 'Plastic, Paper, Glass, Metal, Electronics'),
+            ('E-Waste Solutions', 'Private', 'Electronics',
+             '789 Tech Park, Electronics City', 13.0827, 80.2707,
+             'service@ewastesolutions.com', '+1122334455', 'https://ewastesolutions.com',
+             'Mon-Fri: 10AM-4PM', 'Electronics, Batteries'),
+            ('Plastic Renew', 'NGO', 'Plastic',
+             '321 Polymer Avenue, Industrial Area', 17.3850, 78.4867,
+             'info@plasticrenew.org', '+1567890123', 'https://plasticrenew.org',
+             'Tue-Sun: 9AM-5PM', 'Plastic only'),
+            ('Paper Saver', 'Private', 'Paper',
+             '654 Pulp Road, Green Valley', 19.0760, 72.8777,
+             'contact@papersaver.com', '+1456789012', 'https://papersaver.com',
+             'Mon-Fri: 8AM-4PM', 'Paper, Cardboard')
+        ]
+        
+        c.executemany('''INSERT INTO recycling_centers 
+                      (name, type, category, address, latitude, longitude, 
+                       contact_email, contact_phone, website, operating_hours, accepted_materials) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', sample_centers)
     
     conn.commit()
     conn.close()
@@ -148,7 +195,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
 
-
 def get_nearby_recyclers(user_lat, user_lon, max_distance_km=50, limit=10):
     """Find Recyclers near the user's location from SQLite DB"""
     conn = sqlite3.connect('users.db')
@@ -186,10 +232,48 @@ def get_nearby_recyclers(user_lat, user_lon, max_distance_km=50, limit=10):
     conn.close()
     return nearby_recyclers[:limit]
 
-
+def get_nearby_recycling_centers(user_lat, user_lon, max_distance_km=50, category='', limit=10):
+    """Find recycling centers near the user's location"""
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    
+    # For SQLite, we need to calculate distance for each row
+    if category:
+        c.execute('SELECT * FROM recycling_centers WHERE category LIKE ?', (f'%{category}%',))
+    else:
+        c.execute('SELECT * FROM recycling_centers')
+        
+    all_centers = c.fetchall()
+    
+    nearby_centers = []
+    for center in all_centers:
+        center_lat, center_lon = center[5], center[6]  # latitude and longitude columns
+        if center_lat and center_lon:
+            distance = calculate_distance(user_lat, user_lon, center_lat, center_lon)
+            if distance <= max_distance_km:
+                center_data = {
+                    'id': center[0],
+                    'name': center[1],
+                    'type': center[2],
+                    'category': center[3],
+                    'address': center[4],
+                    'latitude': center[5],
+                    'longitude': center[6],
+                    'contact_email': center[7],
+                    'contact_phone': center[8],
+                    'website': center[9],
+                    'operating_hours': center[10],
+                    'accepted_materials': center[11],
+                    'distance': round(distance, 1)
+                }
+                nearby_centers.append(center_data)
+    
+    # Sort by distance
+    nearby_centers.sort(key=lambda x: x['distance'])
+    conn.close()
+    return nearby_centers[:limit]
 
 # Flask route for Find recyclers page
-
 @app.route('/find_recyclers')
 def find_recyclers():
     # Example: User's current location (should come from frontend/JS geolocation)
@@ -198,10 +282,7 @@ def find_recyclers():
     recyclers = get_nearby_recyclers(user_lat, user_lon)
     return render_template("recyclers.html", recyclers=recyclers)
 
-
-
 # Fix Send-to-recyclers button in upload page
-
 @app.route('/send_to_recyclers')
 def send_to_recyclers():
     """Redirect to Find recyclers page after classification output"""
@@ -433,7 +514,6 @@ def dashboard():
                          wallet_address=wallet_address)
 
 # Add these routes to your app.py
-
 @app.route("/api/user/update_profile", methods=["POST"])
 @login_required
 def update_user_profile():
@@ -501,6 +581,12 @@ def recyclers_page():
     """recycler listing page"""
     return render_template("recyclers.html")
 
+@app.route("/recycling-centers")
+@login_required
+def recycling_centers_page():
+    """Recycling centers listing page with map"""
+    return render_template("recycling_centers.html")
+
 @app.route("/api/recyclers/nearby", methods=["GET"])
 @login_required
 def nearby_recyclers():
@@ -533,6 +619,44 @@ def nearby_recyclers():
             'user_location': {'lat': user_lat, 'lon': user_lon},
             'recyclers': recyclers,
             'count': len(recyclers)
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/api/recycling-centers/nearby", methods=["GET"])
+@login_required
+def nearby_recycling_centers():
+    """Get recycling centers near the user's location"""
+    try:
+        # Get user's location from request
+        user_lat = request.args.get('lat', type=float)
+        user_lon = request.args.get('lon', type=float)
+        category = request.args.get('category', '')
+        
+        # If no coordinates provided, use a default location
+        if user_lat is None or user_lon is None:
+            # Try to get from user's profile if stored
+            conn = sqlite3.connect('users.db')
+            c = conn.cursor()
+            c.execute("SELECT latitude, longitude FROM users WHERE id = ?", (session['user_id'],))
+            location = c.fetchone()
+            conn.close()
+            
+            if location and location[0] and location[1]:
+                user_lat, user_lon = location[0], location[1]
+            else:
+                # Default to Bangalore coordinates
+                user_lat, user_lon = 12.9716, 77.5946
+        
+        max_distance = request.args.get('max_distance', 20, type=float)  # km
+        centers = get_nearby_recycling_centers(user_lat, user_lon, max_distance, category)
+        
+        return jsonify({
+            'success': True,
+            'user_location': {'lat': user_lat, 'lon': user_lon},
+            'centers': centers,
+            'count': len(centers)
         })
         
     except Exception as e:

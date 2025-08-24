@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find recyclers - Sortify</title>
+    <title>Find Recyclers - Sortify</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
@@ -25,6 +25,8 @@
         }
         .recycler-card {
             transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
         .recycler-card:hover {
             transform: translateY(-3px);
@@ -48,7 +50,7 @@
 
     <main class="max-w-6xl mx-auto px-6 py-8">
         <div class="mb-8 text-center">
-            <h1 class="text-4xl font-bold mb-2">Find Nearby Recyclers</h1>
+            <h1 class="text-4xl font-bold mb-2">Find Nearby Recycling Centers</h1>
             <p class="text-lg opacity-80">Connect with organizations that can help recycle your materials</p>
         </div>
 
@@ -59,12 +61,21 @@
                 </button>
             </div>
             <div class="flex items-center gap-2">
-                <span>Search within:</span>
-                <select id="distanceFilter" onchange="loadrecyclers()" class="bg-white bg-opacity-20 text-white rounded-lg px-3 py-2">
-                    <option value="10">10 km</option>
-                    <option value="25" selected>25 km</option>
+                <span>Filter by:</span>
+                <select id="categoryFilter" onchange="loadRecyclers()" class="bg-white bg-opacity-20 text-white rounded-lg px-3 py-2">
+                    <option value="">All Categories</option>
+                    <option value="Plastic">Plastic</option>
+                    <option value="Paper">Paper</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Glass">Glass</option>
+                    <option value="Metal">Metal</option>
+                </select>
+                <span>Within:</span>
+                <select id="distanceFilter" onchange="loadRecyclers()" class="bg-white bg-opacity-20 text-white rounded-lg px-3 py-2">
+                    <option value="5">5 km</option>
+                    <option value="10" selected>10 km</option>
+                    <option value="20">20 km</option>
                     <option value="50">50 km</option>
-                    <option value="100">100 km</option>
                 </select>
             </div>
         </div>
@@ -78,21 +89,21 @@
             </div>
             
             <div>
-                <div id="recyclersList" class="space-y-4">
-                    <!-- recyclers will be loaded here -->
+                <div id="recyclersList" class="space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Recyclers will be loaded here -->
                 </div>
                 <div id="loading" class="text-center py-8 hidden">
-                    <p>Loading recyclers...</p>
+                    <p>Loading recycling centers...</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Contact recycler Modal -->
+    <!-- Contact Recycler Modal -->
     <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white bg-opacity-15 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md">
             <h3 class="text-xl font-semibold mb-4">Contact <span id="recyclerName"></span></h3>
-            <textarea id="contactMessage" placeholder="Your message to the recycler..." class="w-full p-3 rounded-lg text-gray-900 mb-4" rows="4"></textarea>
+            <textarea id="contactMessage" placeholder="Your message to the recycling center..." class="w-full p-3 rounded-lg text-gray-900 mb-4" rows="4"></textarea>
             <div class="flex gap-3">
                 <button onclick="sendContactRequest()" class="flex-1 py-2 bg-green-500 rounded-lg font-semibold">Send</button>
                 <button onclick="closeModal()" class="flex-1 py-2 bg-gray-500 rounded-lg font-semibold">Cancel</button>
@@ -102,7 +113,7 @@
 
     <script>
         let userLocation = null;
-        let currentrecyclerId = null;
+        let currentRecyclerId = null;
         let map = null;
         let markers = [];
 
@@ -143,11 +154,11 @@
                     };
                     
                     document.getElementById('locationStatus').innerHTML = `
-                        <p>Location found! Loading recyclers nearby...</p>
+                        <p>Location found! Loading recycling centers nearby...</p>
                     `;
                     
                     initMap(userLocation.lat, userLocation.lon);
-                    loadrecyclers();
+                    loadRecyclers();
                 },
                 error => {
                     console.error("Geolocation error:", error);
@@ -155,13 +166,13 @@
                         <p>Unable to get your location. Using default location.</p>
                     `;
                     initMap();
-                    loadrecyclers();
+                    loadRecyclers();
                 }
             );
         }
 
         // Load recyclers based on current location
-        async function loadrecyclers() {
+        async function loadRecyclers() {
             if (!userLocation) {
                 alert("Please enable location services first.");
                 return;
@@ -171,86 +182,111 @@
             document.getElementById('recyclersList').innerHTML = '';
             
             const maxDistance = document.getElementById('distanceFilter').value;
+            const category = document.getElementById('categoryFilter').value;
             
             try {
-                const response = await fetch(`/api/recyclers/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&max_distance=${maxDistance}`);
+                let url = `/api/recycling-centers/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&max_distance=${maxDistance}`;
+                if (category) {
+                    url += `&category=${category}`;
+                }
+                
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 if (data.success) {
-                    displayrecyclers(data.recyclers);
-                    updateMapWithrecyclers(data.recyclers);
+                    displayRecyclers(data.centers);
+                    updateMapWithRecyclers(data.centers);
                 } else {
-                    alert("Error loading recyclers: " + data.error);
+                    alert("Error loading recycling centers: " + data.error);
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Failed to load recyclers");
+                alert("Failed to load recycling centers");
             } finally {
                 document.getElementById('loading').classList.add('hidden');
             }
         }
 
         // Display recyclers in the list
-        function displayrecyclers(recyclers) {
+        function displayRecyclers(recyclers) {
             const container = document.getElementById('recyclersList');
             
             if (recyclers.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-8 bg-white bg-opacity-10 rounded-lg">
-                        <p>No recyclers found within the selected distance.</p>
-                        <p>Try increasing the search radius.</p>
+                        <p>No recycling centers found within the selected distance.</p>
+                        <p>Try increasing the search radius or changing the category.</p>
                     </div>
                 `;
                 return;
             }
             
             container.innerHTML = recyclers.map(recycler => `
-                <div class="recycler-card bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
+                <div class="recycler-card p-6 rounded-2xl shadow-lg">
                     <h3 class="text-xl font-semibold mb-2">${recycler.name}</h3>
-                    <p class="text-sm opacity-80 mb-3">${recycler.description}</p>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="px-2 py-1 bg-blue-500 rounded-full text-xs">${recycler.type}</span>
+                        <span class="px-2 py-1 bg-green-500 rounded-full text-xs">${recycler.category}</span>
+                        <span class="px-2 py-1 bg-purple-500 rounded-full text-xs">${recycler.distance} km</span>
+                    </div>
+                    
+                    <p class="text-sm opacity-80 mb-3">${recycler.address}</p>
                     
                     <div class="grid grid-cols-2 gap-2 text-sm mb-4">
-                        <div><span class="font-medium">Distance:</span> ${recycler.distance} km</div>
-                        <div><span class="font-medium">Category:</span> ${recycler.category}</div>
-                        <div><span class="font-medium">City:</span> ${recycler.city}</div>
-                        <div><span class="font-medium">Accepts Recyclables:</span> ${recycler.accepts_recyclables ? 'Yes' : 'No'}</div>
+                        <div><span class="font-medium">Hours:</span> ${recycler.operating_hours}</div>
+                        <div><span class="font-medium">Accepts:</span> ${recycler.accepted_materials}</div>
                     </div>
                     
                     <div class="flex flex-wrap gap-2 mb-4">
-                        ${recycler.website ? `<a href="${recycler.website}" target="_blank" class="px-3 py-1 bg-blue-500 rounded-full text-xs">Website</a>` : ''}
-                        ${recycler.email ? `<a href="mailto:${recycler.email}" class="px-3 py-1 bg-green-500 rounded-full text-xs">Email</a>` : ''}
-                        ${recycler.phone ? `<a href="tel:${recycler.phone}" class="px-3 py-1 bg-purple-500 rounded-full text-xs">Call</a>` : ''}
+                        ${recycler.contact_phone ? `<a href="tel:${recycler.contact_phone}" class="px-3 py-1 bg-blue-500 rounded-full text-xs">Call</a>` : ''}
+                        ${recycler.contact_email ? `<a href="mailto:${recycler.contact_email}" class="px-3 py-1 bg-green-500 rounded-full text-xs">Email</a>` : ''}
+                        ${recycler.website ? `<a href="${recycler.website}" target="_blank" class="px-3 py-1 bg-purple-500 rounded-full text-xs">Website</a>` : ''}
                     </div>
                     
                     <button onclick="openContactModal(${recycler.id}, '${recycler.name}')" class="w-full py-2 bg-yellow-300 text-gray-900 rounded-lg font-semibold hover:bg-yellow-400 transition">
-                        Contact This recycler
+                        Contact This Center
                     </button>
                 </div>
             `).join('');
         }
 
         // Update map with recycler markers
-        function updateMapWithrecyclers(recyclers) {
-
+        function updateMapWithRecyclers(recyclers) {
+            // Clear existing markers
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
             
             // Add recycler markers
             recyclers.forEach(recycler => {
                 const marker = L.marker([recycler.latitude, recycler.longitude]).addTo(map);
-                marker.bindPopup(`
+                
+                let popupContent = `
                     <strong>${recycler.name}</strong><br>
                     ${recycler.address}<br>
-                    Distance: ${recycler.distance} km<br>
-                    <button onclick="openContactModal(${recycler.id}, '${recycler.name}')" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded">Contact</button>
-                `);
+                    <strong>Type:</strong> ${recycler.type}<br>
+                    <strong>Category:</strong> ${recycler.category}<br>
+                    <strong>Accepts:</strong> ${recycler.accepted_materials}<br>
+                    <strong>Distance:</strong> ${recycler.distance} km
+                `;
+                
+                if (recycler.contact_phone) {
+                    popupContent += `<br><a href="tel:${recycler.contact_phone}">Call: ${recycler.contact_phone}</a>`;
+                }
+                
+                marker.bindPopup(popupContent);
                 markers.push(marker);
             });
+            
+            // Adjust map view to show all markers if there are any
+            if (recyclers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
         }
 
         // Open contact modal
         function openContactModal(recyclerId, recyclerName) {
-            currentrecyclerId = recyclerId;
+            currentRecyclerId = recyclerId;
             document.getElementById('recyclerName').textContent = recyclerName;
             document.getElementById('contactModal').classList.remove('hidden');
         }
@@ -259,7 +295,7 @@
         function closeModal() {
             document.getElementById('contactModal').classList.add('hidden');
             document.getElementById('contactMessage').value = '';
-            currentrecyclerId = null;
+            currentRecyclerId = null;
         }
 
         // Send contact request
@@ -272,13 +308,13 @@
             }
             
             try {
-                const response = await fetch('/api/recyclers/contact', {
+                const response = await fetch('/api/ngos/contact', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        recycler_id: currentrecyclerId,
+                        ngo_id: currentRecyclerId,
                         message: message
                     })
                 });
