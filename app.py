@@ -47,8 +47,8 @@ def init_db():
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                   FOREIGN KEY (user_id) REFERENCES users (id))''')
     
-    # Create NGOs table with location data
-    c.execute('''CREATE TABLE IF NOT EXISTS ngos
+    # Create recyclers table with location data
+    c.execute('''CREATE TABLE IF NOT EXISTS recyclers
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   name TEXT NOT NULL,
                   description TEXT,
@@ -78,10 +78,10 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN latitude REAL")
         c.execute("ALTER TABLE users ADD COLUMN longitude REAL")
     
-    # Insert sample NGOs if table is empty
-    c.execute("SELECT COUNT(*) FROM ngos")
+    # Insert sample recyclers if table is empty
+    c.execute("SELECT COUNT(*) FROM recyclers")
     if c.fetchone()[0] == 0:
-        sample_ngos = [
+        sample_recyclers = [
             ('Green Earth Foundation', 'Environmental conservation and waste management', 'Environment', 
              'contact@greenearth.org', '+1234567890', 'https://greenearth.org', 
              '123 Eco Street, Green City', 12.9716, 77.5946, 'Bangalore', True),
@@ -99,9 +99,9 @@ def init_db():
              '654 Earth Boulevard, Eco District', 17.3850, 78.4867, 'Hyderabad', True)
         ]
         
-        c.executemany('''INSERT INTO ngos (name, description, category, email, phone, website, 
+        c.executemany('''INSERT INTO recyclers (name, description, category, email, phone, website, 
                       address, latitude, longitude, city, accepts_recyclables) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', sample_ngos)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', sample_recyclers)
     
     conn.commit()
     conn.close()
@@ -139,51 +139,73 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     try:
         return geodesic((lat1, lon1), (lat2, lon2)).km
     except:
-        # Fallback calculation if geopy is not available
+        # Fallback Haversine formula if geopy not available
         R = 6371  # Earth radius in km
         dlat = math.radians(lat2 - lat1)
         dlon = math.radians(lon2 - lon1)
-        a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) * \
-            math.cos(math.radians(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * \
+            math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
 
-def get_nearby_ngos(user_lat, user_lon, max_distance_km=50, limit=10):
-    """Find NGOs near the user's location"""
+
+def get_nearby_recyclers(user_lat, user_lon, max_distance_km=50, limit=10):
+    """Find Recyclers near the user's location from SQLite DB"""
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
-    
-    # For SQLite, we need to calculate distance for each row
-    c.execute('SELECT * FROM ngos WHERE accepts_recyclables = TRUE')
-    all_ngos = c.fetchall()
-    
-    nearby_ngos = []
-    for ngo in all_ngos:
-        ngo_lat, ngo_lon = ngo[8], ngo[9]  # latitude and longitude columns
-        if ngo_lat and ngo_lon:
-            distance = calculate_distance(user_lat, user_lon, ngo_lat, ngo_lon)
+
+    # Fetch recyclers that accept recyclables
+    c.execute("SELECT * FROM recyclers WHERE accepts_recyclables = 1")
+    all_recyclers = c.fetchall()
+
+    nearby_recyclers = []
+    for recycler in all_recyclers:
+        recycler_lat, recycler_lon = recycler[8], recycler[9]  # latitude & longitude columns
+        if recycler_lat and recycler_lon:
+            distance = calculate_distance(user_lat, user_lon, recycler_lat, recycler_lon)
             if distance <= max_distance_km:
-                ngo_data = {
-                    'id': ngo[0],
-                    'name': ngo[1],
-                    'description': ngo[2],
-                    'category': ngo[3],
-                    'email': ngo[4],
-                    'phone': ngo[5],
-                    'website': ngo[6],
-                    'address': ngo[7],
-                    'latitude': ngo[8],
-                    'longitude': ngo[9],
-                    'city': ngo[10],
-                    'accepts_recyclables': bool(ngo[11]),
+                recycler_data = {
+                    'id': recycler[0],
+                    'name': recycler[1],
+                    'description': recycler[2],
+                    'category': recycler[3],
+                    'email': recycler[4],
+                    'phone': recycler[5],
+                    'website': recycler[6],
+                    'address': recycler[7],
+                    'latitude': recycler[8],
+                    'longitude': recycler[9],
+                    'city': recycler[10],
+                    'accepts_recyclables': bool(recycler[11]),
                     'distance': round(distance, 1)
                 }
-                nearby_ngos.append(ngo_data)
-    
-    # Sort by distance and limit results
-    nearby_ngos.sort(key=lambda x: x['distance'])
+                nearby_recyclers.append(recycler_data)
+
+    # Sort recyclers by distance and limit results
+    nearby_recyclers.sort(key=lambda x: x['distance'])
     conn.close()
-    return nearby_ngos[:limit]
+    return nearby_recyclers[:limit]
+
+
+
+# Flask route for Find recyclers page
+
+@app.route('/find_recyclers')
+def find_recyclers():
+    # Example: User's current location (should come from frontend/JS geolocation)
+    user_lat, user_lon = 28.6139, 77.2090  # New Delhi coordinates (example)
+
+    recyclers = get_nearby_recyclers(user_lat, user_lon)
+    return render_template("recyclers.html", recyclers=recyclers)
+
+
+
+# Fix Send-to-recyclers button in upload page
+
+@app.route('/send_to_recyclers')
+def send_to_recyclers():
+    """Redirect to Find recyclers page after classification output"""
+    return redirect(url_for('find_recyclers'))
 
 # Load ML Model
 MODEL_PATH = os.environ.get("MODEL_PATH", "model/Sortify.h5")
@@ -410,20 +432,79 @@ def dashboard():
                          total_points=total_points,
                          wallet_address=wallet_address)
 
+# Add these routes to your app.py
+
+@app.route("/api/user/update_profile", methods=["POST"])
+@login_required
+def update_user_profile():
+    """Update user profile information"""
+    try:
+        data = request.get_json()
+        new_name = data.get('name', '').strip()
+        new_password = data.get('password', '').strip()
+        
+        if not new_name and not new_password:
+            return jsonify({'success': False, 'error': 'No changes provided'}), 400
+        
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        
+        # Get current user data
+        c.execute("SELECT name, password FROM users WHERE id = ?", (session['user_id'],))
+        current_user = c.fetchone()
+        
+        if not current_user:
+            conn.close()
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        current_name, current_password_hash = current_user
+        
+        # Update name if provided and different
+        if new_name and new_name != current_name:
+            c.execute("UPDATE users SET name = ? WHERE id = ?", (new_name, session['user_id']))
+            session['user_name'] = new_name  # Update session
+        
+        # Update password if provided
+        if new_password:
+            hashed_password = generate_password_hash(new_password)
+            c.execute("UPDATE users SET password = ? WHERE id = ?", (hashed_password, session['user_id']))
+        
+        conn.commit()
+        conn.close()
+        
+        # Log the activity
+        changes = []
+        if new_name and new_name != current_name:
+            changes.append(f"name to {new_name}")
+        if new_password:
+            changes.append("password")
+            
+        if changes:
+            log_activity(session['user_id'], 'profile_update', f"Updated {', '.join(changes)}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Profile updated successfully',
+            'new_name': new_name if new_name else current_name
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route("/features")
 def features_page():
     return render_template("feature.html")
 
-@app.route("/ngos")
+@app.route("/recyclers")
 @login_required
-def ngos_page():
-    """NGO listing page"""
-    return render_template("ngos.html")
+def recyclers_page():
+    """recycler listing page"""
+    return render_template("recyclers.html")
 
-@app.route("/api/ngos/nearby", methods=["GET"])
+@app.route("/api/recyclers/nearby", methods=["GET"])
 @login_required
-def nearby_ngos():
-    """Get NGOs near the user's location"""
+def nearby_recyclers():
+    """Get recyclers near the user's location"""
     try:
         # Get user's location from request
         user_lat = request.args.get('lat', type=float)
@@ -445,25 +526,25 @@ def nearby_ngos():
                 user_lat, user_lon = 12.9716, 77.5946
         
         max_distance = request.args.get('max_distance', 50, type=float)  # km
-        ngos = get_nearby_ngos(user_lat, user_lon, max_distance)
+        recyclers = get_nearby_recyclers(user_lat, user_lon, max_distance)
         
         return jsonify({
             'success': True,
             'user_location': {'lat': user_lat, 'lon': user_lon},
-            'ngos': ngos,
-            'count': len(ngos)
+            'recyclers': recyclers,
+            'count': len(recyclers)
         })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route("/api/ngos/contact", methods=["POST"])
+@app.route("/api/recyclers/contact", methods=["POST"])
 @login_required
-def contact_ngo():
-    """Handle NGO contact form submission"""
+def contact_recycler():
+    """Handle recycler contact form submission"""
     try:
         data = request.get_json()
-        ngo_id = data.get('ngo_id')
+        recycler_id = data.get('recycler_id')
         message = data.get('message', '')
         
         # Get user info
@@ -472,27 +553,27 @@ def contact_ngo():
         c.execute("SELECT name, email FROM users WHERE id = ?", (session['user_id'],))
         user = c.fetchone()
         
-        # Get NGO info
-        c.execute("SELECT name, email FROM ngos WHERE id = ?", (ngo_id,))
-        ngo = c.fetchone()
+        # Get recycler info
+        c.execute("SELECT name, email FROM recyclers WHERE id = ?", (recycler_id,))
+        recycler = c.fetchone()
         
-        if not user or not ngo:
-            return jsonify({'success': False, 'error': 'User or NGO not found'}), 404
+        if not user or not recycler:
+            return jsonify({'success': False, 'error': 'User or recycler not found'}), 404
         
         user_name, user_email = user
-        ngo_name, ngo_email = ngo
+        recycler_name, recycler_email = recycler
         
         # Here you would typically:
         # 1. Save the contact request to the database
-        # 2. Send an email to the NGO
+        # 2. Send an email to the recycler
         # 3. Send a confirmation email to the user
         
         # For now, we'll just log it
-        print(f"Contact request from {user_name} ({user_email}) to {ngo_name} ({ngo_email}): {message}")
+        print(f"Contact request from {user_name} ({user_email}) to {recycler_name} ({recycler_email}): {message}")
         
         # Log the activity
-        log_activity(session['user_id'], 'ngo_contact', 
-                    f"Contacted {ngo_name} about recycling", 0)
+        log_activity(session['user_id'], 'recycler_contact', 
+                    f"Contacted {recycler_name} about recycling", 0)
         
         conn.close()
         
@@ -562,9 +643,9 @@ def predict():
             log_activity(session['user_id'], "scan", 
                         f"Scanned non-recyclable item: {filename}")
         
-        # Get NGOs from database instead of hardcoded list
-        c.execute("SELECT id, name, email FROM ngos WHERE accepts_recyclables = TRUE LIMIT 5")
-        db_ngos = [{"id": row[0], "name": row[1], "contact": row[2]} for row in c.fetchall()]
+        # Get recyclers from database instead of hardcoded list
+        c.execute("SELECT id, name, email FROM recyclers WHERE accepts_recyclables = TRUE LIMIT 5")
+        db_recyclers = [{"id": row[0], "name": row[1], "contact": row[2]} for row in c.fetchall()]
         
         conn.close()
 
@@ -573,7 +654,7 @@ def predict():
             "file_path": "/" + file_path.replace("\\", "/"),
             "reward_tx": reward_tx,
             "points_earned": points_earned,
-            "ngos": db_ngos if recyclable else []
+            "recyclers": db_recyclers if recyclable else []
         })
     except Exception as e:
         return jsonify({"error": f"Inference failed: {str(e)}"}), 500

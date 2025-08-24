@@ -20,7 +20,8 @@
             <nav class="flex items-center gap-6">
                 <a href="{{ url_for('landing') }}" class="hover:text-yellow-300 transition">Home</a>
                 <a href="{{ url_for('upload_page') }}" class="hover:text-yellow-300 transition">Upload</a>
-                <a href="{{ url_for('ngos_page') }}" class="hover:text-yellow-300 transition">Find NGOs</a>
+                <a href="{{ url_for('recyclers_page') }}" class="hover:text-yellow-300 transition">Find Recyclers</a>
+                <a href="{{ url_for('features_page') }}" class="hover:text-yellow-300 transition">Features</a>
                 <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-red-600 rounded-lg font-semibold hover:bg-red-700 transition">
                     Logout
                 </a>
@@ -30,9 +31,14 @@
 
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto px-6 py-8">
-        <div class="mb-8">
-            <h2 class="text-3xl font-bold mb-2">Welcome, {{ user_name }}!</h2>
-            <p class="text-lg opacity-80">Track your recycling activities and rewards</p>
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h2 class="text-3xl font-bold mb-2">Welcome, {{ user_name }}!</h2>
+                <p class="text-lg opacity-80">Track your recycling activities and rewards</p>
+            </div>
+            <button onclick="openEditProfileModal()" class="px-4 py-2 bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700 transition">
+                Edit Profile
+            </button>
         </div>
 
         <!-- Stats Cards -->
@@ -111,7 +117,7 @@
                 {% set recycling_activities = activities|selectattr("0", "equalto", "recycling")|list %}
                 {% if recycling_activities %}
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left">~
+                    <table class="w-full text-left">
                         <thead>
                             <tr class="border-b border-white border-opacity-20">
                                 <th class="pb-2">Item</th>
@@ -160,6 +166,41 @@
         </div>
     </main>
 
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white bg-opacity-15 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-semibold mb-4">Edit Profile</h3>
+            
+            <div class="mb-4">
+                <label class="block mb-2">Name</label>
+                <input type="text" id="profileName" value="{{ user_name }}" 
+                       class="w-full p-3 rounded-lg text-gray-900">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block mb-2">New Password (leave blank to keep current)</label>
+                <input type="password" id="profilePassword" 
+                       class="w-full p-3 rounded-lg text-gray-900" 
+                       placeholder="Enter new password">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block mb-2">Confirm Password</label>
+                <input type="password" id="profilePasswordConfirm" 
+                       class="w-full p-3 rounded-lg text-gray-900" 
+                       placeholder="Confirm new password">
+            </div>
+            
+            <div id="profileError" class="text-red-300 mb-4 hidden"></div>
+            <div id="profileSuccess" class="text-green-300 mb-4 hidden"></div>
+            
+            <div class="flex gap-3">
+                <button onclick="updateProfile()" class="flex-1 py-2 bg-green-500 rounded-lg font-semibold">Save Changes</button>
+                <button onclick="closeEditProfileModal()" class="flex-1 py-2 bg-gray-500 rounded-lg font-semibold">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Tab functionality
         document.querySelectorAll('.tab-button').forEach(button => {
@@ -201,6 +242,91 @@
             
             // Scroll to the history section
             document.getElementById('recycling-history').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Profile editing functions
+        function openEditProfileModal() {
+            document.getElementById('editProfileModal').classList.remove('hidden');
+            document.getElementById('profileError').classList.add('hidden');
+            document.getElementById('profileSuccess').classList.add('hidden');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+            // Clear password fields
+            document.getElementById('profilePassword').value = '';
+            document.getElementById('profilePasswordConfirm').value = '';
+        }
+
+        async function updateProfile() {
+            const name = document.getElementById('profileName').value.trim();
+            const password = document.getElementById('profilePassword').value;
+            const passwordConfirm = document.getElementById('profilePasswordConfirm').value;
+            
+            const errorElement = document.getElementById('profileError');
+            const successElement = document.getElementById('profileSuccess');
+            
+            errorElement.classList.add('hidden');
+            successElement.classList.add('hidden');
+            
+            // Validate inputs
+            if (!name) {
+                errorElement.textContent = 'Name is required';
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            if (password && password !== passwordConfirm) {
+                errorElement.textContent = 'Passwords do not match';
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            if (password && password.length < 6) {
+                errorElement.textContent = 'Password must be at least 6 characters';
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/update_profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    successElement.textContent = data.message;
+                    successElement.classList.remove('hidden');
+                    
+                    // Update the welcome message if name changed
+                    if (data.new_name) {
+                        document.querySelector('h2.text-3xl').textContent = `Welcome, ${data.new_name}!`;
+                    }
+                    
+                    // Clear password fields on success
+                    document.getElementById('profilePassword').value = '';
+                    document.getElementById('profilePasswordConfirm').value = '';
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeEditProfileModal();
+                    }, 2000);
+                } else {
+                    errorElement.textContent = data.error;
+                    errorElement.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorElement.textContent = 'Failed to update profile';
+                errorElement.classList.remove('hidden');
+            }
         }
     </script>
 </body>

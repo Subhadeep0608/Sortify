@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find NGOs - Sortify</title>
+    <title>Find recyclers - Sortify</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
@@ -23,10 +23,10 @@
             border-radius: 12px;
             z-index: 1;
         }
-        .ngo-card {
+        .recycler-card {
             transition: all 0.3s ease;
         }
-        .ngo-card:hover {
+        .recycler-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
@@ -48,7 +48,7 @@
 
     <main class="max-w-6xl mx-auto px-6 py-8">
         <div class="mb-8 text-center">
-            <h1 class="text-4xl font-bold mb-2">Find Nearby NGOs</h1>
+            <h1 class="text-4xl font-bold mb-2">Find Nearby Recyclers</h1>
             <p class="text-lg opacity-80">Connect with organizations that can help recycle your materials</p>
         </div>
 
@@ -60,7 +60,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span>Search within:</span>
-                <select id="distanceFilter" onchange="loadNGOs()" class="bg-white bg-opacity-20 text-white rounded-lg px-3 py-2">
+                <select id="distanceFilter" onchange="loadrecyclers()" class="bg-white bg-opacity-20 text-white rounded-lg px-3 py-2">
                     <option value="10">10 km</option>
                     <option value="25" selected>25 km</option>
                     <option value="50">50 km</option>
@@ -73,26 +73,26 @@
             <div>
                 <div id="map" class="mb-6"></div>
                 <div id="locationStatus" class="text-center py-4 bg-white bg-opacity-10 rounded-lg">
-                    <p>Click "Use My Location" to find NGOs near you</p>
+                    <p>Click "Use My Location" to find recyclers near you</p>
                 </div>
             </div>
             
             <div>
-                <div id="ngosList" class="space-y-4">
-                    <!-- NGOs will be loaded here -->
+                <div id="recyclersList" class="space-y-4">
+                    <!-- recyclers will be loaded here -->
                 </div>
                 <div id="loading" class="text-center py-8 hidden">
-                    <p>Loading NGOs...</p>
+                    <p>Loading recyclers...</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Contact NGO Modal -->
+    <!-- Contact recycler Modal -->
     <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white bg-opacity-15 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md">
-            <h3 class="text-xl font-semibold mb-4">Contact <span id="ngoName"></span></h3>
-            <textarea id="contactMessage" placeholder="Your message to the NGO..." class="w-full p-3 rounded-lg text-gray-900 mb-4" rows="4"></textarea>
+            <h3 class="text-xl font-semibold mb-4">Contact <span id="recyclerName"></span></h3>
+            <textarea id="contactMessage" placeholder="Your message to the recycler..." class="w-full p-3 rounded-lg text-gray-900 mb-4" rows="4"></textarea>
             <div class="flex gap-3">
                 <button onclick="sendContactRequest()" class="flex-1 py-2 bg-green-500 rounded-lg font-semibold">Send</button>
                 <button onclick="closeModal()" class="flex-1 py-2 bg-gray-500 rounded-lg font-semibold">Cancel</button>
@@ -102,7 +102,7 @@
 
     <script>
         let userLocation = null;
-        let currentNgoId = null;
+        let currentrecyclerId = null;
         let map = null;
         let markers = [];
 
@@ -143,11 +143,11 @@
                     };
                     
                     document.getElementById('locationStatus').innerHTML = `
-                        <p>Location found! Loading NGOs nearby...</p>
+                        <p>Location found! Loading recyclers nearby...</p>
                     `;
                     
                     initMap(userLocation.lat, userLocation.lon);
-                    loadNGOs();
+                    loadrecyclers();
                 },
                 error => {
                     console.error("Geolocation error:", error);
@@ -155,103 +155,103 @@
                         <p>Unable to get your location. Using default location.</p>
                     `;
                     initMap();
-                    loadNGOs();
+                    loadrecyclers();
                 }
             );
         }
 
-        // Load NGOs based on current location
-        async function loadNGOs() {
+        // Load recyclers based on current location
+        async function loadrecyclers() {
             if (!userLocation) {
                 alert("Please enable location services first.");
                 return;
             }
             
             document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('ngosList').innerHTML = '';
+            document.getElementById('recyclersList').innerHTML = '';
             
             const maxDistance = document.getElementById('distanceFilter').value;
             
             try {
-                const response = await fetch(`/api/ngos/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&max_distance=${maxDistance}`);
+                const response = await fetch(`/api/recyclers/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&max_distance=${maxDistance}`);
                 const data = await response.json();
                 
                 if (data.success) {
-                    displayNGOs(data.ngos);
-                    updateMapWithNGOs(data.ngos);
+                    displayrecyclers(data.recyclers);
+                    updateMapWithrecyclers(data.recyclers);
                 } else {
-                    alert("Error loading NGOs: " + data.error);
+                    alert("Error loading recyclers: " + data.error);
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Failed to load NGOs");
+                alert("Failed to load recyclers");
             } finally {
                 document.getElementById('loading').classList.add('hidden');
             }
         }
 
-        // Display NGOs in the list
-        function displayNGOs(ngos) {
-            const container = document.getElementById('ngosList');
+        // Display recyclers in the list
+        function displayrecyclers(recyclers) {
+            const container = document.getElementById('recyclersList');
             
-            if (ngos.length === 0) {
+            if (recyclers.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-8 bg-white bg-opacity-10 rounded-lg">
-                        <p>No NGOs found within the selected distance.</p>
+                        <p>No recyclers found within the selected distance.</p>
                         <p>Try increasing the search radius.</p>
                     </div>
                 `;
                 return;
             }
             
-            container.innerHTML = ngos.map(ngo => `
-                <div class="ngo-card bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-semibold mb-2">${ngo.name}</h3>
-                    <p class="text-sm opacity-80 mb-3">${ngo.description}</p>
+            container.innerHTML = recyclers.map(recycler => `
+                <div class="recycler-card bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-2">${recycler.name}</h3>
+                    <p class="text-sm opacity-80 mb-3">${recycler.description}</p>
                     
                     <div class="grid grid-cols-2 gap-2 text-sm mb-4">
-                        <div><span class="font-medium">Distance:</span> ${ngo.distance} km</div>
-                        <div><span class="font-medium">Category:</span> ${ngo.category}</div>
-                        <div><span class="font-medium">City:</span> ${ngo.city}</div>
-                        <div><span class="font-medium">Accepts Recyclables:</span> ${ngo.accepts_recyclables ? 'Yes' : 'No'}</div>
+                        <div><span class="font-medium">Distance:</span> ${recycler.distance} km</div>
+                        <div><span class="font-medium">Category:</span> ${recycler.category}</div>
+                        <div><span class="font-medium">City:</span> ${recycler.city}</div>
+                        <div><span class="font-medium">Accepts Recyclables:</span> ${recycler.accepts_recyclables ? 'Yes' : 'No'}</div>
                     </div>
                     
                     <div class="flex flex-wrap gap-2 mb-4">
-                        ${ngo.website ? `<a href="${ngo.website}" target="_blank" class="px-3 py-1 bg-blue-500 rounded-full text-xs">Website</a>` : ''}
-                        ${ngo.email ? `<a href="mailto:${ngo.email}" class="px-3 py-1 bg-green-500 rounded-full text-xs">Email</a>` : ''}
-                        ${ngo.phone ? `<a href="tel:${ngo.phone}" class="px-3 py-1 bg-purple-500 rounded-full text-xs">Call</a>` : ''}
+                        ${recycler.website ? `<a href="${recycler.website}" target="_blank" class="px-3 py-1 bg-blue-500 rounded-full text-xs">Website</a>` : ''}
+                        ${recycler.email ? `<a href="mailto:${recycler.email}" class="px-3 py-1 bg-green-500 rounded-full text-xs">Email</a>` : ''}
+                        ${recycler.phone ? `<a href="tel:${recycler.phone}" class="px-3 py-1 bg-purple-500 rounded-full text-xs">Call</a>` : ''}
                     </div>
                     
-                    <button onclick="openContactModal(${ngo.id}, '${ngo.name}')" class="w-full py-2 bg-yellow-300 text-gray-900 rounded-lg font-semibold hover:bg-yellow-400 transition">
-                        Contact This NGO
+                    <button onclick="openContactModal(${recycler.id}, '${recycler.name}')" class="w-full py-2 bg-yellow-300 text-gray-900 rounded-lg font-semibold hover:bg-yellow-400 transition">
+                        Contact This recycler
                     </button>
                 </div>
             `).join('');
         }
 
-        // Update map with NGO markers
-        function updateMapWithNGOs(ngos) {
+        // Update map with recycler markers
+        function updateMapWithrecyclers(recyclers) {
 
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
             
-            // Add NGO markers
-            ngos.forEach(ngo => {
-                const marker = L.marker([ngo.latitude, ngo.longitude]).addTo(map);
+            // Add recycler markers
+            recyclers.forEach(recycler => {
+                const marker = L.marker([recycler.latitude, recycler.longitude]).addTo(map);
                 marker.bindPopup(`
-                    <strong>${ngo.name}</strong><br>
-                    ${ngo.address}<br>
-                    Distance: ${ngo.distance} km<br>
-                    <button onclick="openContactModal(${ngo.id}, '${ngo.name}')" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded">Contact</button>
+                    <strong>${recycler.name}</strong><br>
+                    ${recycler.address}<br>
+                    Distance: ${recycler.distance} km<br>
+                    <button onclick="openContactModal(${recycler.id}, '${recycler.name}')" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded">Contact</button>
                 `);
                 markers.push(marker);
             });
         }
 
         // Open contact modal
-        function openContactModal(ngoId, ngoName) {
-            currentNgoId = ngoId;
-            document.getElementById('ngoName').textContent = ngoName;
+        function openContactModal(recyclerId, recyclerName) {
+            currentrecyclerId = recyclerId;
+            document.getElementById('recyclerName').textContent = recyclerName;
             document.getElementById('contactModal').classList.remove('hidden');
         }
 
@@ -259,7 +259,7 @@
         function closeModal() {
             document.getElementById('contactModal').classList.add('hidden');
             document.getElementById('contactMessage').value = '';
-            currentNgoId = null;
+            currentrecyclerId = null;
         }
 
         // Send contact request
@@ -272,13 +272,13 @@
             }
             
             try {
-                const response = await fetch('/api/ngos/contact', {
+                const response = await fetch('/api/recyclers/contact', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        ngo_id: currentNgoId,
+                        recycler_id: currentrecyclerId,
                         message: message
                     })
                 });

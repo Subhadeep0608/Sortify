@@ -54,11 +54,17 @@
     <!-- Result Section -->
     <div id="result" class="mt-8 text-lg"></div>
 
-    <!-- Send to NGO Button -->
-    <button id="sendNgoBtn" 
+    <!-- Send to recycler Button - Only shown for recyclable items -->
+    <button id="sendrecyclerBtn" 
       class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl shadow-lg transition duration-300 w-full font-semibold hover-scale mt-4 hidden">
-      🤝 Send to NGO
+      🤝 Send to Recycler
     </button>
+
+    <!-- View NGOs Button - Alternative for recyclable items -->
+    <a href="/ngos" id="viewNgosBtn" 
+      class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl shadow-lg transition duration-300 w-full font-semibold hover-scale mt-4 hidden text-center">
+      📍 Find Nearby Recycling Centers
+    </a>
   </div>
 
   <a href="/" class="mt-10 text-blue-400 hover:text-blue-300 transition duration-300 animate-fadeIn">← Back to Home</a>
@@ -71,7 +77,8 @@
     const captureBtn = document.getElementById("captureBtn");
     const cameraStream = document.getElementById("cameraStream");
     const cameraCanvas = document.getElementById("cameraCanvas");
-    const sendNgoBtn = document.getElementById("sendNgoBtn");
+    const sendrecyclerBtn = document.getElementById("sendrecyclerBtn");
+    const viewNgosBtn = document.getElementById("viewNgosBtn");
 
     let lastPrediction = null;
     let lastFilePath = null;
@@ -81,7 +88,10 @@
       formData.append("file", file);
 
       resultDiv.innerHTML = `<p class="text-yellow-400 animate-pulse">⏳ Processing...</p>`;
-      sendNgoBtn.classList.add("hidden");
+      
+      // Hide both buttons initially
+      sendrecyclerBtn.classList.add("hidden");
+      viewNgosBtn.classList.add("hidden");
 
       fetch("/predict", { method: "POST", body: formData })
       .then(res => res.json())
@@ -92,22 +102,31 @@
           lastPrediction = data.prediction;
           lastFilePath = data.file_path;
 
-          const guidance = data.prediction.toLowerCase() === 'recyclable' 
+          const isRecyclable = data.prediction.toLowerCase() === 'recyclable';
+          
+          const guidance = isRecyclable 
             ? `<p class="text-green-400">✅ Place in the <strong>recycling bin</strong>.</p>` 
             : `<p class="text-red-400">🗑️ Dispose in the <strong>general waste bin</strong>.</p>`;
 
           resultDiv.innerHTML = `
-            <p class="text-xl font-bold mb-4 ${data.prediction.toLowerCase()==='recyclable'?'text-green-400':'text-red-400'}">${data.prediction}</p>
+            <p class="text-xl font-bold mb-4 ${isRecyclable ? 'text-green-400' : 'text-red-400'}">${data.prediction}</p>
             ${guidance}
             <img src="${data.file_path}" alt="Uploaded Image" class="rounded-xl shadow-lg w-72 mx-auto mt-4 hover-scale"/>
           `;
 
-          sendNgoBtn.classList.remove("hidden");
+          // Show appropriate buttons based on recyclability
+          if (isRecyclable) {
+            sendrecyclerBtn.classList.remove("hidden");
+            viewNgosBtn.classList.remove("hidden");
+          } else {
+            sendrecyclerBtn.classList.add("hidden");
+            viewNgosBtn.classList.add("hidden");
+          }
 
           // Token reward popup
-          if(data.tokens_earned && data.tokens_earned>0){
-            setTimeout(()=> {
-              alert(`🎉 You earned ${data.tokens_earned} tokens! Transaction: ${data.reward_tx}`);
+          if(data.points_earned && data.points_earned > 0){
+            setTimeout(() => {
+              alert(`🎉 You earned ${data.points_earned} points! Transaction: ${data.reward_tx}`);
             }, 200);
           }
         }
@@ -149,20 +168,24 @@
       },"image/jpeg");
     });
 
-    sendNgoBtn.addEventListener("click", ()=>{
-      fetch("/send_to_ngo",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ prediction:lastPrediction, file_path:lastFilePath })
-      }).then(res=>res.json()).then(data=>{
+    sendrecyclerBtn.addEventListener("click", ()=>{
+      fetch("/send_to_ngo", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ prediction: lastPrediction, file_path: lastFilePath })
+      })
+      .then(res => res.json())
+      .then(data => {
         if(data.success){
-          resultDiv.innerHTML += `<p class="mt-4 text-purple-400">🤝 Sent to NGO successfully!</p>`;
+          resultDiv.innerHTML += `<p class="mt-4 text-purple-400">🤝 Sent to Recycler successfully!</p>`;
+          sendrecyclerBtn.classList.add("hidden");
         } else {
-          resultDiv.innerHTML += `<p class="mt-4 text-red-400">⚠️ Failed to send to NGO.</p>`;
+          resultDiv.innerHTML += `<p class="mt-4 text-red-400">⚠️ ${data.error || 'Failed to send to Recycler.'}</p>`;
         }
-      }).catch(err=>{
+      })
+      .catch(err => {
         console.error(err);
-        resultDiv.innerHTML += `<p class="mt-4 text-red-400">🤝 Searching for your nearest NGO's; We'll notify you later.`;
+        resultDiv.innerHTML += `<p class="mt-4 text-red-400">⚠️ Network error. Please try again.</p>`;
       });
     });
   </script>
