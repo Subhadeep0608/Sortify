@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - Sortify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            background: linear-gradient(-45deg, #16a34a, #2563eb, #4f46e5, #f59e0b); 
+            background-size: 400% 400%; 
+            animation: gradientBG 12s ease infinite; 
+        }
+        @keyframes gradientBG { 
+            0%{background-position:0% 50%;} 
+            50%{background-position:100% 50%;} 
+            100%{background-position:0% 50%;} 
+        }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white font-sans">
+    <!-- Header -->
+    <header class="w-full bg-white bg-opacity-10 backdrop-blur-lg shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="{{ url_for('landing') }}" class="text-3xl font-extrabold text-yellow-300 drop-shadow-lg">♻️ Sortify</a>
+            <nav class="flex items-center gap-6">
+                <a href="{{ url_for('landing') }}" class="hover:text-yellow-300 transition">Home</a>
+                <a href="{{ url_for('upload_page') }}" class="hover:text-yellow-300 transition">Upload</a>
+                {% if 'user_id' in session %}
+                <a href="{{ url_for('dashboard') }}" class="hover:text-yellow-300 transition">Dashboard</a>
+                {% endif %}
+                <a href="#main-content" class="text-yellow-300 font-bold">Features</a>
+                <a href="{{ url_for('logout') if 'user_id' in session else url_for('login_page') }}" 
+                   class="px-4 py-2 {% if 'user_id' in session %}bg-red-600 hover:bg-red-700{% else %}bg-yellow-300 text-gray-900 hover:bg-yellow-400{% endif %} rounded-lg font-semibold transition">
+                    {{ 'Logout' if 'user_id' in session else 'Login' }}
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="max-w-6xl mx-auto px-6 py-12">
+        <!-- Hero Section -->
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-extrabold mb-6">Sortify <span class="text-yellow-300">Features</span></h1>
+            <p class="text-xl max-w-3xl mx-auto opacity-90">
+                Discover all the powerful features that make Sortify the ultimate solution for smart recycling and waste management.
+            </p>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- AI-Powered Waste Classification -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">🤖</div>
+                <h3 class="text-2xl font-semibold mb-3">AI-Powered Classification</h3>
+                <p class="opacity-90 mb-4">Our advanced machine learning model accurately identifies recyclable and non-recyclable waste with precision.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Real-time image analysis</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Supports multiple waste categories</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Continuous learning algorithm</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> High accuracy rate</li>
+                </ul>
+            </div>
+
+            <!-- Blockchain Reward System -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">⛓️</div>
+                <h3 class="text-2xl font-semibold mb-3">Blockchain Rewards</h3>
+                <p class="opacity-90 mb-4">Earn cryptocurrency rewards for your recycling efforts through our secure blockchain integration.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Instant reward distribution</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Transparent transaction history</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Secure wallet integration</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> No transaction fees</li>
+                </ul>
+            </div>
+
+            <!-- User Authentication -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">🔐</div>
+                <h3 class="text-2xl font-semibold mb-3">Secure Authentication</h3>
+                <p class="opacity-90 mb-4">Your data and rewards are protected with our robust user authentication system.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Encrypted password storage</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Session management</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Secure wallet linking</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Privacy-focused design</li>
+                </ul>
+            </div>
+
+            <!-- Dashboard Analytics -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">📊</div>
+                <h3 class="text-2xl font-semibold mb-3">Personal Dashboard</h3>
+                <p class="opacity-90 mb-4">Track your recycling journey and environmental impact with detailed analytics.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Recycling history tracking</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Points earned statistics</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Environmental impact metrics</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Reward transaction history</li>
+                </ul>
+            </div>
+
+            <!-- NGO Partnership -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">🤝</div>
+                <h3 class="text-2xl font-semibold mb-3">NGO Partnerships</h3>
+                <p class="opacity-90 mb-4">Connect with environmental organizations to maximize your impact.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Direct NGO communication</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Waste collection scheduling</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Community impact reports</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Partnership opportunities</li>
+                </ul>
+            </div>
+
+            <!-- Multi-Language Support -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">🌐</div>
+                <h3 class="text-2xl font-semibold mb-3">Multi-Language Support</h3>
+                <p class="opacity-90 mb-4">Sortify speaks your language with comprehensive multi-language support.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> English interface</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Bengali support</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Hindi support</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> More languages coming soon</li>
+                </ul>
+            </div>
+
+            <!-- Mobile Responsive -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">📱</div>
+                <h3 class="text-2xl font-semibold mb-3">Mobile Responsive</h3>
+                <p class="opacity-90 mb-4">Use Sortify on any device with our fully responsive design.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Mobile-first design</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Tablet optimized</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Desktop enhanced</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Touch-friendly interface</li>
+                </ul>
+            </div>
+
+            <!-- Environmental Impact -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">🌍</div>
+                <h3 class="text-2xl font-semibold mb-3">Environmental Impact</h3>
+                <p class="opacity-90 mb-4">See the real environmental impact of your recycling efforts.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> CO₂ reduction tracking</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Waste diversion metrics</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Resource conservation stats</li>
+                    <li class="flex items-center"><span class="text-green-300 mr-2">✓</span> Personal impact report</li>
+                </ul>
+            </div>
+
+            <!-- Future Roadmap -->
+            <div class="feature-card bg-white bg-opacity-10 backdrop-blur-xl p-8 rounded-2xl shadow-lg">
+                <div class="text-4xl mb-4">🚀</div>
+                <h3 class="text-2xl font-semibold mb-3">Future Roadmap</h3>
+                <p class="opacity-90 mb-4">We're constantly improving Sortify with new features and enhancements.</p>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center"><span class="text-blue-300 mr-2">⟡</span> Mobile app development</li>
+                    <li class="flex items-center"><span class="text-blue-300 mr-2">⟡</span> Advanced waste categories</li>
+                    <li class="flex items-center"><span class="text-blue-300 mr-2">⟡</span> Social sharing features</li>
+                    <li class="flex items-center"><span class="text-blue-300 mr-2">⟡</span> Recycling challenges & leaderboards</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="text-center mt-16 bg-white bg-opacity-10 backdrop-blur-xl p-10 rounded-2xl shadow-lg">
+            <h2 class="text-3xl font-bold mb-4">Ready to Start Your Recycling Journey?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+                Join thousands of eco-conscious users who are making a difference with Sortify.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                {% if 'user_id' not in session %}
+                <a href="{{ url_for('signup_page') }}" class="px-8 py-4 bg-yellow-300 text-gray-900 rounded-full font-bold text-lg shadow-lg transform transition hover:scale-105 hover:bg-yellow-400">
+                    Sign Up Now
+                </a>
+                <a href="{{ url_for('login_page') }}" class="px-8 py-4 bg-indigo-600 text-white rounded-full font-bold text-lg shadow-lg transform transition hover:scale-105 hover:bg-indigo-700">
+                    Login
+                </a>
+                {% else %}
+                <a href="{{ url_for('upload_page') }}" class="px-8 py-4 bg-yellow-300 text-gray-900 rounded-full font-bold text-lg shadow-lg transform transition hover:scale-105 hover:bg-yellow-400">
+                    Start Recycling
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="px-8 py-4 bg-indigo-600 text-white rounded-full font-bold text-lg shadow-lg transform transition hover:scale-105 hover:bg-indigo-700">
+                    View Dashboard
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white bg-opacity-10 backdrop-blur-lg mt-20 py-8">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="opacity-80">© 2023 Sortify. All rights reserved. Making the world greener, one recycle at a time.</p>
+        </div>
+    </footer>
+</body>
+</html>

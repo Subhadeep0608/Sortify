@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sortify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: linear-gradient(-45deg, #16a34a, #2563eb, #4f46e5, #f59e0b); background-size: 400% 400%; animation: gradientBG 12s ease infinite; }
+        @keyframes gradientBG { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+        .recycling-history { display: none; }
+        .recycling-history.active { display: block; }
+    </style>
+</head>
+<body class="min-h-screen text-white">
+    <!-- Header -->
+    <header class="w-full bg-white bg-opacity-10 backdrop-blur-lg shadow-md">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold text-yellow-300">♻️ Sortify Dashboard</h1>
+            <nav class="flex items-center gap-6">
+                <a href="{{ url_for('landing') }}" class="hover:text-yellow-300 transition">Home</a>
+                <a href="{{ url_for('upload_page') }}" class="hover:text-yellow-300 transition">Upload</a>
+                <a href="{{ url_for('ngos_page') }}" class="hover:text-yellow-300 transition">Find NGOs</a>
+                <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-red-600 rounded-lg font-semibold hover:bg-red-700 transition">
+                    Logout
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold mb-2">Welcome, {{ user_name }}!</h2>
+            <p class="text-lg opacity-80">Track your recycling activities and rewards</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-2">Total Points</h3>
+                <p class="text-4xl font-bold text-yellow-300">{{ total_points }}</p>
+                <p class="text-sm opacity-80">Points earned from recycling</p>
+            </div>
+            <div class="bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-2">Wallet Address</h3>
+                <p class="text-lg font-mono break-all">{{ wallet_address }}</p>
+                <p class="text-sm opacity-80">Your rewards destination</p>
+            </div>
+            <div class="bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-2">Environmental Impact</h3>
+                <p class="text-4xl font-bold text-green-300">{{ total_points * 0.5 }}g</p>
+                <p class="text-sm opacity-80">CO₂ reduced through recycling</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-white border-opacity-20 mb-6">
+            <button class="tab-button px-4 py-2 font-medium text-lg border-b-2 border-yellow-300 text-yellow-300" data-tab="recent-activity">
+                Recent Activity
+            </button>
+            <button class="tab-button px-4 py-2 font-medium text-lg opacity-70 hover:opacity-100 transition" data-tab="recycling-history">
+                Recycling History
+            </button>
+        </div>
+
+        <!-- Recent Activity Tab -->
+        <div id="recent-activity" class="tab-content">
+            <div class="bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-4">Recent Activity</h3>
+                {% if activities %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-white border-opacity-20">
+                                <th class="pb-2">Activity</th>
+                                <th class="pb-2">Details</th>
+                                <th class="pb-2">Points</th>
+                                <th class="pb-2">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in activities %}
+                            <tr class="border-b border-white border-opacity-10">
+                                <td class="py-3 capitalize">{{ activity[0] }}</td>
+                                <td class="py-3">{{ activity[1] }}</td>
+                                <td class="py-3">
+                                    {% if activity[2] > 0 %}
+                                    <span class="text-green-300">+{{ activity[2] }}</span>
+                                    {% else %}
+                                    <span>-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">{{ activity[3].split('.')[0] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center py-8 opacity-70">No activity yet. Start recycling to earn points!</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recycling History Tab -->
+        <div id="recycling-history" class="tab-content" style="display: none;">
+            <div class="bg-white bg-opacity-10 backdrop-blur-xl p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-4">Recycling History</h3>
+                {% if activities %}
+                {% set recycling_activities = activities|selectattr("0", "equalto", "recycling")|list %}
+                {% if recycling_activities %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">~
+                        <thead>
+                            <tr class="border-b border-white border-opacity-20">
+                                <th class="pb-2">Item</th>
+                                <th class="pb-2">Status</th>
+                                <th class="pb-2">Points Earned</th>
+                                <th class="pb-2">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in recycling_activities %}
+                            <tr class="border-b border-white border-opacity-10">
+                                <td class="py-3">
+                                    {% if activity[1] %}
+                                        {{ activity[1].split(':')[-1]|trim }}
+                                    {% else %}
+                                        Recycled Item
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 bg-green-500 rounded-full text-xs">Recycled</span>
+                                </td>
+                                <td class="py-3 text-green-300">+{{ activity[2] }}</td>
+                                <td class="py-3">{{ activity[3].split('.')[0] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center py-8 opacity-70">No recycling history yet. Start recycling to earn points!</p>
+                {% endif %}
+                {% else %}
+                <p class="text-center py-8 opacity-70">No recycling history yet. Start recycling to earn points!</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-4">
+            <a href="{{ url_for('upload_page') }}" class="flex-1 px-6 py-4 bg-yellow-300 text-gray-900 rounded-xl font-bold text-center shadow-lg transform transition hover:scale-105 hover:bg-yellow-400">
+                🚀 Start New Recycling
+            </a>
+            <button onclick="showRecyclingHistory()" class="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-xl font-bold text-center shadow-lg transform transition hover:scale-105 hover:bg-indigo-700">
+                📋 View Recycling History
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and contents
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('border-b-2', 'border-yellow-300', 'text-yellow-300');
+                    btn.classList.add('opacity-70');
+                });
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                // Add active class to clicked button
+                button.classList.add('border-b-2', 'border-yellow-300', 'text-yellow-300');
+                button.classList.remove('opacity-70');
+                
+                // Show corresponding content
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).style.display = 'block';
+            });
+        });
+
+        function showRecyclingHistory() {
+            // Switch to recycling history tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-b-2', 'border-yellow-300', 'text-yellow-300');
+                btn.classList.add('opacity-70');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            const historyButton = document.querySelector('[data-tab="recycling-history"]');
+            historyButton.classList.add('border-b-2', 'border-yellow-300', 'text-yellow-300');
+            historyButton.classList.remove('opacity-70');
+            
+            document.getElementById('recycling-history').style.display = 'block';
+            
+            // Scroll to the history section
+            document.getElementById('recycling-history').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
