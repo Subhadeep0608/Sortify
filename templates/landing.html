@@ -23,8 +23,17 @@
       <a href="#about" class="hover:text-yellow-300 transition">About</a>
     </nav>
     <div class="space-x-3">
-      <button @click="loginOpen = true" class="px-5 py-2 bg-yellow-300 text-gray-900 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-yellow-400 transition transform">Login</button>
-      <button @click="signupOpen = true" class="px-5 py-2 bg-indigo-800 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-indigo-900 transition transform">Sign Up</button>
+      <!-- Auth Buttons -->
+      <div class="flex items-center gap-4">
+        <button onclick="goToLogin()" 
+          class="px-5 py-2 bg-yellow-300 text-gray-900 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-yellow-400 transition transform">
+          🔐 Login
+        </button>
+        <button onclick="goToSignup()" 
+          class="px-5 py-2 bg-indigo-800 rounded-full font-bold shadow-lg hover:scale-105 hover:bg-indigo-900 transition transform">
+          ✨ Sign Up
+        </button>
+      </div>
     </div>
   </div>
 </header>
@@ -61,35 +70,45 @@
       </div>
     </section>
   </div>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      new Typed("#typed-text", {
-        strings: [
-          "♻️ AI-powered waste classification to make recycling smarter, easier, and greener. Let’s build a cleaner future together.",
-          "♻️ এআই-চালিত বর্জ্য শ্রেণীবিভাজন যা পুনর্ব্যবহারকে করবে আরও সহজ এবং সবুজ। আসুন একসাথে গড়ি একটি পরিচ্ছন্ন ভবিষ্যৎ।",
-          "♻️ एआई आधारित कचरा वर्गीकरण जो रीसाइक्लिंग को बनाएगा स्मार्ट, आसान और हरा-भरा। आइए मिलकर एक स्वच्छ भविष्य बनाएं।"
-        ],
-        typeSpeed: 40,
-        backSpeed: 25,
-        backDelay: 2000,
-        loop: true,
-        smartBackspace: true,
-      });
-    });
-
-    async function checkWallet(){
-      const wallet = document.getElementById('walletCheck').value;
-      if(!wallet){ alert("Enter wallet address"); return; }
-      const res = await fetch('/wallet/' + wallet);
-      const data = await res.json();
-      if(data.balance !== undefined){
-        document.getElementById('balance').innerText = `Balance: ${data.balance}`;
-      } else {
-        document.getElementById('balance').innerText = `Error: ${data.balance}`;
-      }
-    }
-  </script>
 </main>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    new Typed("#typed-text", {
+      strings: [
+        "♻️ AI-powered waste classification to make recycling smarter, easier, and greener. Let's build a cleaner future together.",
+        "♻️ এআই-চালিত বর্জ্য শ্রেণীবিভাজন যা পুনর্ব্যবহারকে করবে আরও সহজ এবং সবুজ। আসুন একসাথে গড়ি একটি পরিচ্ছন্ন ভবিষ্যৎ।",
+        "♻️ एआई आधारित कचरा वर्गीकरण जो रीसाइक्लिंग को बनाएगा स्मार्ट, आसान और हरा-भरा। आइए मिलकर एक स्वच्छ भविष्य बनाएं।"
+      ],
+      typeSpeed: 40,
+      backSpeed: 25,
+      backDelay: 2000,
+      loop: true,
+      smartBackspace: true,
+    });
+  });
+
+  // Navigation functions - Moved outside of checkWallet()
+  function goToLogin() {
+    window.location.href = '/login.html';
+  }
+
+  function goToSignup() {
+    window.location.href = '/signup.html';
+  }
+
+  async function checkWallet(){
+    const wallet = document.getElementById('walletCheck').value;
+    if(!wallet){ alert("Enter wallet address"); return; }
+    const res = await fetch('/wallet/' + wallet);
+    const data = await res.json();
+    if(data.balance !== undefined){
+      document.getElementById('balance').innerText = `Balance: ${data.balance}`;
+    } else {
+      document.getElementById('balance').innerText = `Error: ${data.balance}`;
+    }
+  }
+</script>
+
 </body>
 </html>
